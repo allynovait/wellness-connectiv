@@ -1,9 +1,16 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Calendar } from "@/components/ui/calendar";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { CalendarDays, MessageSquare, FileText, Stethoscope, PlusCircle } from "lucide-react";
+import {
+  CalendarDays,
+  MessageSquare,
+  FileText,
+  Stethoscope,
+  PlusCircle,
+  Thermometer,
+} from "lucide-react";
 
 // Моковые данные для демонстрации
 const mockDiagnoses = [{
@@ -39,16 +46,57 @@ const mockMessages = [{
   text: "Результаты анализов в норме",
   doctor: "Др. Петрова"
 }];
+
 const Index = () => {
   const [date, setDate] = useState<Date | undefined>(new Date());
-  const [activeTab, setActiveTab] = useState<"diagnoses" | "tests" | "messages" | "chat" | "calendar">("diagnoses");
-  return <div className="min-h-screen bg-clinic-background p-4 max-w-md mx-auto">
+  const [activeTab, setActiveTab] = useState<
+    "diagnoses" | "tests" | "messages" | "chat" | "calendar"
+  >("diagnoses");
+  const [weather, setWeather] = useState<{ temp: number | null; loading: boolean }>({
+    temp: null,
+    loading: true
+  });
+
+  useEffect(() => {
+    const fetchWeather = async () => {
+      try {
+        const response = await fetch(
+          "https://api.openweathermap.org/data/2.5/weather?q=Nizhnevartovsk&appid=8e2f1807b6c17d31d96937638184a98c&units=metric"
+        );
+        const data = await response.json();
+        setWeather({ temp: Math.round(data.main.temp), loading: false });
+      } catch (error) {
+        console.error("Ошибка при загрузке погоды:", error);
+        setWeather({ temp: null, loading: false });
+      }
+    };
+
+    fetchWeather();
+  }, []);
+
+  return (
+    <div className="min-h-screen bg-clinic-background p-4 max-w-md mx-auto">
       {/* Верхняя панель с логотипом и информацией о пациенте */}
       <div className="mb-6">
         <div className="flex items-center gap-3 mb-4">
-          <img src="/lovable-uploads/d200c670-f916-4464-8195-3b9de974c5cd.png" alt="Гиппократ" className="h-8 w-auto object-contain mix-blend-multiply" />
-          <h1 className="text-2xl font-bold text-clinic-dark">
-        </h1>
+          <img 
+            src="/lovable-uploads/d200c670-f916-4464-8195-3b9de974c5cd.png" 
+            alt="Гиппократ" 
+            className="h-8 w-auto object-contain mix-blend-multiply" 
+          />
+          <div className="flex justify-between items-center w-full">
+            <h1 className="text-2xl font-bold text-clinic-dark">Гиппократ</h1>
+            <div className="flex items-center gap-2 text-clinic-primary">
+              <Thermometer className="w-4 h-4" />
+              {weather.loading ? (
+                <span className="text-sm">Загрузка...</span>
+              ) : weather.temp !== null ? (
+                <span className="text-sm font-medium">{weather.temp}°C</span>
+              ) : (
+                <span className="text-sm">--°C</span>
+              )}
+            </div>
+          </div>
         </div>
         <div className="flex items-center gap-2">
           <div className="w-8 h-8 rounded-full bg-clinic-light flex items-center justify-center text-clinic-primary font-semibold">
@@ -165,6 +213,8 @@ const Index = () => {
           Написать врачу
         </Button>
       </div>
-    </div>;
+    </div>
+  );
 };
+
 export default Index;
