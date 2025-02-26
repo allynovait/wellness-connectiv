@@ -77,7 +77,7 @@ const Index = () => {
             <h1 className="text-clinic-dark font-thin text-xs mx-[54px]">
 Нижневартовск</h1>
             <div className="flex items-center gap-2 text-clinic-primary">
-              <Thermometer className="w-4 h-4" />
+              
               {weather.loading ? <span className="text-sm">-15°C</span> : weather.temp !== null ? <span className="text-sm font-medium">{weather.temp}°C</span> : <span className="text-sm">--°C</span>}
             </div>
           </div>
