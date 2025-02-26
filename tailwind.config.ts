@@ -26,10 +26,10 @@ export default {
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",
         clinic: {
-          primary: "#9b87f5",
-          secondary: "#7E69AB",
-          background: "#F1F0FB",
-          light: "#E5DEFF",
+          primary: "#FF6A6A",
+          secondary: "#ff8484",
+          background: "#FFF5F5",
+          light: "#FFE5E5",
           dark: "#1A1F2C",
         },
         primary: {

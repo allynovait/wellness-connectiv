@@ -10,7 +10,6 @@ import {
   FileText,
   Stethoscope,
   PlusCircle,
-  ChevronRight,
 } from "lucide-react";
 
 // Моковые данные для демонстрации
@@ -37,10 +36,25 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-clinic-background p-4 max-w-md mx-auto">
-      {/* Верхняя панель с информацией о пациенте */}
+      {/* Верхняя панель с логотипом и информацией о пациенте */}
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-clinic-dark">Иван Иванов</h1>
-        <p className="text-sm text-gray-500">Карта пациента #12345</p>
+        <div className="flex items-center gap-3 mb-4">
+          <img 
+            src="/lovable-uploads/d200c670-f916-4464-8195-3b9de974c5cd.png" 
+            alt="Гиппократ" 
+            className="h-8 w-auto"
+          />
+          <h1 className="text-2xl font-bold text-clinic-dark">Гиппократ</h1>
+        </div>
+        <div className="flex items-center gap-2">
+          <div className="w-8 h-8 rounded-full bg-clinic-light flex items-center justify-center text-clinic-primary font-semibold">
+            ИИ
+          </div>
+          <div>
+            <p className="font-medium text-clinic-dark">Иван Иванов</p>
+            <p className="text-sm text-gray-500">Карта пациента #12345</p>
+          </div>
+        </div>
       </div>
 
       {/* Основной контент */}
@@ -49,7 +63,9 @@ const Index = () => {
         <div className="flex gap-2 overflow-x-auto pb-2 -mx-4 px-4">
           <Button
             variant={activeTab === "diagnoses" ? "default" : "outline"}
-            className="whitespace-nowrap"
+            className={`whitespace-nowrap ${
+              activeTab === "diagnoses" ? "bg-clinic-primary hover:bg-clinic-secondary" : ""
+            }`}
             onClick={() => setActiveTab("diagnoses")}
           >
             <FileText className="w-4 h-4 mr-2" />
@@ -57,7 +73,9 @@ const Index = () => {
           </Button>
           <Button
             variant={activeTab === "tests" ? "default" : "outline"}
-            className="whitespace-nowrap"
+            className={`whitespace-nowrap ${
+              activeTab === "tests" ? "bg-clinic-primary hover:bg-clinic-secondary" : ""
+            }`}
             onClick={() => setActiveTab("tests")}
           >
             <FileText className="w-4 h-4 mr-2" />
@@ -65,7 +83,9 @@ const Index = () => {
           </Button>
           <Button
             variant={activeTab === "messages" ? "default" : "outline"}
-            className="whitespace-nowrap"
+            className={`whitespace-nowrap ${
+              activeTab === "messages" ? "bg-clinic-primary hover:bg-clinic-secondary" : ""
+            }`}
             onClick={() => setActiveTab("messages")}
           >
             <MessageSquare className="w-4 h-4 mr-2" />
@@ -73,7 +93,9 @@ const Index = () => {
           </Button>
           <Button
             variant={activeTab === "calendar" ? "default" : "outline"}
-            className="whitespace-nowrap"
+            className={`whitespace-nowrap ${
+              activeTab === "calendar" ? "bg-clinic-primary hover:bg-clinic-secondary" : ""
+            }`}
             onClick={() => setActiveTab("calendar")}
           >
             <CalendarDays className="w-4 h-4 mr-2" />
@@ -113,7 +135,7 @@ const Index = () => {
           <div className="space-y-4">
             <div className="flex justify-between items-center">
               <h2 className="text-xl font-semibold">Анализы</h2>
-              <Button size="sm" className="bg-clinic-primary">
+              <Button size="sm" className="bg-clinic-primary hover:bg-clinic-secondary">
                 <PlusCircle className="w-4 h-4 mr-2" />
                 Сдать анализы
               </Button>
@@ -162,7 +184,7 @@ const Index = () => {
           <div className="space-y-4">
             <div className="flex justify-between items-center">
               <h2 className="text-xl font-semibold">Календарь приёмов</h2>
-              <Button size="sm" className="bg-clinic-primary">
+              <Button size="sm" className="bg-clinic-primary hover:bg-clinic-secondary">
                 <Stethoscope className="w-4 h-4 mr-2" />
                 Записаться
               </Button>
@@ -183,7 +205,7 @@ const Index = () => {
 
       {/* Нижняя панель быстрых действий */}
       <div className="fixed bottom-0 left-0 right-0 bg-white border-t p-4 max-w-md mx-auto">
-        <Button className="w-full bg-clinic-primary">
+        <Button className="w-full bg-clinic-primary hover:bg-clinic-secondary">
           <MessageSquare className="w-4 h-4 mr-2" />
           Написать врачу
         </Button>
