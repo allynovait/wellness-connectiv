@@ -4,6 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { CalendarDays, MessageSquare, FileText, Stethoscope, PlusCircle, Thermometer } from "lucide-react";
+import { BookAppointmentDialog } from "@/components/BookAppointmentDialog";
+import { useToast } from "@/hooks/use-toast";
 
 // Моковые данные для демонстрации
 const mockDiagnoses = [{
@@ -39,9 +41,12 @@ const mockMessages = [{
   text: "Результаты анализов в норме",
   doctor: "Др. Петрова"
 }];
+
 const Index = () => {
   const [date, setDate] = useState<Date | undefined>(new Date());
   const [activeTab, setActiveTab] = useState<"diagnoses" | "tests" | "messages" | "chat" | "calendar">("diagnoses");
+  const [appointmentDialogOpen, setAppointmentDialogOpen] = useState(false);
+  const { toast } = useToast();
   const [weather, setWeather] = useState<{
     temp: number | null;
     loading: boolean;
@@ -49,6 +54,7 @@ const Index = () => {
     temp: null,
     loading: true
   });
+
   useEffect(() => {
     const fetchWeather = async () => {
       try {
@@ -68,8 +74,17 @@ const Index = () => {
     };
     fetchWeather();
   }, []);
+
+  const handleAppointmentSubmit = (formData: any) => {
+    console.log("Appointment data:", formData);
+    toast({
+      title: "Запись создана",
+      description: `Вы записаны к ${formData.doctor} на ${formData.date.toLocaleDateString()} в ${formData.time}`,
+    });
+    setAppointmentDialogOpen(false);
+  };
+
   return <div className="min-h-screen bg-clinic-background p-4 max-w-md mx-auto">
-      {/* Верхняя панель с логотипом и информацией о пациенте */}
       <div className="mb-6">
         <div className="flex items-center gap-3 mb-4">
           <img src="/lovable-uploads/d200c670-f916-4464-8195-3b9de974c5cd.png" alt="Гиппократ" className="h-8 w-auto object-contain mix-blend-multiply" />
@@ -93,9 +108,7 @@ const Index = () => {
         </div>
       </div>
 
-      {/* Основной контент */}
       <div className="space-y-6">
-        {/* Навигация */}
         <div className="flex gap-2 overflow-x-auto pb-2 -mx-4 px-4">
           <Button variant={activeTab === "diagnoses" ? "default" : "outline"} className={`whitespace-nowrap ${activeTab === "diagnoses" ? "bg-clinic-primary hover:bg-clinic-secondary" : ""}`} onClick={() => setActiveTab("diagnoses")}>
             <FileText className="w-4 h-4 mr-2" />
@@ -115,7 +128,6 @@ const Index = () => {
           </Button>
         </div>
 
-        {/* Контент вкладок */}
         {activeTab === "diagnoses" && <div className="space-y-4">
             <div className="flex justify-between items-center">
               <h2 className="text-xl font-semibold">Диагнозы</h2>
@@ -177,7 +189,11 @@ const Index = () => {
         {activeTab === "calendar" && <div className="space-y-4">
             <div className="flex justify-between items-center">
               <h2 className="text-xl font-semibold">Календарь приёмов</h2>
-              <Button size="sm" className="bg-clinic-primary hover:bg-clinic-secondary">
+              <Button 
+                size="sm" 
+                className="bg-clinic-primary hover:bg-clinic-secondary"
+                onClick={() => setAppointmentDialogOpen(true)}
+              >
                 <Stethoscope className="w-4 h-4 mr-2" />
                 Записаться
               </Button>
@@ -190,13 +206,19 @@ const Index = () => {
           </div>}
       </div>
 
-      {/* Нижняя панель быстрых действий */}
       <div className="fixed bottom-0 left-0 right-0 bg-white border-t p-4 max-w-md mx-auto">
         <Button className="w-full bg-clinic-primary hover:bg-clinic-secondary">
           <MessageSquare className="w-4 h-4 mr-2" />
           Написать врачу
         </Button>
       </div>
+
+      <BookAppointmentDialog 
+        open={appointmentDialogOpen} 
+        onOpenChange={setAppointmentDialogOpen}
+        onSubmit={handleAppointmentSubmit}
+        selectedDate={date}
+      />
     </div>;
 };
 export default Index;
