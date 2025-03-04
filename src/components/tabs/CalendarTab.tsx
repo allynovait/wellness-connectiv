@@ -8,7 +8,7 @@ import { Stethoscope } from "lucide-react";
 import { BookAppointmentDialog } from "@/components/BookAppointmentDialog";
 import { useToast } from "@/hooks/use-toast";
 
-// Mock data for appointments
+// Expanded mock data for appointments with more dates
 const mockAppointments = [
   {
     id: 1,
@@ -30,8 +30,53 @@ const mockAppointments = [
     time: "11:00",
     doctor: "Сидоров Петр Петрович - Невролог",
     reason: "Головные боли"
+  },
+  // Additional appointments for more dates
+  {
+    id: 4,
+    date: new Date(2024, 2, 18), // 2024-03-18
+    time: "10:15",
+    doctor: "Козлова Елена Викторовна - Эндокринолог",
+    reason: "Проверка уровня сахара"
+  },
+  {
+    id: 5,
+    date: new Date(2024, 2, 18), // Another appointment on 2024-03-18
+    time: "15:30",
+    doctor: "Иванов Иван Иванович - Терапевт",
+    reason: "Повторный приём"
+  },
+  {
+    id: 6,
+    date: new Date(2024, 2, 22), // 2024-03-22
+    time: "12:45",
+    doctor: "Петрова Анна Сергеевна - Кардиолог",
+    reason: "ЭКГ обследование"
+  },
+  {
+    id: 7,
+    date: new Date(2024, 3, 5), // 2024-04-05
+    time: "09:00",
+    doctor: "Сидоров Петр Петрович - Невролог",
+    reason: "Контрольный осмотр"
+  },
+  {
+    id: 8,
+    date: new Date(2024, 3, 10), // 2024-04-10
+    time: "16:30",
+    doctor: "Козлова Елена Викторовна - Эндокринолог",
+    reason: "Консультация по диете"
   }
 ];
+
+// Function to check if there are appointments on a given date
+const hasAppointmentsOnDate = (date: Date, appointments: typeof mockAppointments) => {
+  return appointments.some(appointment => 
+    appointment.date.getFullYear() === date.getFullYear() &&
+    appointment.date.getMonth() === date.getMonth() &&
+    appointment.date.getDate() === date.getDate()
+  );
+};
 
 export const CalendarTab = () => {
   const [date, setDate] = useState<Date | undefined>(new Date());
@@ -39,9 +84,14 @@ export const CalendarTab = () => {
   const { toast } = useToast();
 
   // Filtered appointments for the selected date
-  const selectedDateAppointments = mockAppointments.filter(
-    appointment => date && appointment.date.toDateString() === date.toDateString()
-  );
+  const selectedDateAppointments = date
+    ? mockAppointments.filter(
+        appointment => 
+          appointment.date.getFullYear() === date.getFullYear() &&
+          appointment.date.getMonth() === date.getMonth() &&
+          appointment.date.getDate() === date.getDate()
+      )
+    : [];
 
   const handleAppointmentSubmit = (formData: any) => {
     console.log("Appointment data:", formData);
@@ -68,7 +118,22 @@ export const CalendarTab = () => {
       
       <Card>
         <CardContent className="p-4">
-          <Calendar mode="single" selected={date} onSelect={setDate} className="rounded-md border" />
+          <Calendar 
+            mode="single" 
+            selected={date} 
+            onSelect={setDate} 
+            className="rounded-md border"
+            modifiers={{
+              highlighted: (day) => hasAppointmentsOnDate(day, mockAppointments)
+            }}
+            modifiersStyles={{
+              highlighted: {
+                fontWeight: 'bold',
+                backgroundColor: 'rgba(34, 197, 94, 0.1)',
+                color: '#10b981'
+              }
+            }}
+          />
         </CardContent>
       </Card>
       
