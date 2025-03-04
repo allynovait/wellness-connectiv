@@ -7,42 +7,40 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Label } from "@/components/ui/label";
 import { format } from "date-fns";
 
-// Моковые данные для выбора врача и времени
-const mockDoctors = [
-  "Иванов Иван Иванович - Терапевт",
-  "Петрова Анна Сергеевна - Кардиолог",
-  "Сидоров Петр Петрович - Невролог",
-  "Козлова Елена Викторовна - Эндокринолог"
+// Моковые данные для выбора типа анализа
+const mockTestTypes = [
+  "Общий анализ крови",
+  "Биохимический анализ крови",
+  "Анализ мочи",
+  "Анализ на гормоны",
+  "ПЦР-тест",
+  "Анализ на COVID-19"
 ];
 
-const mockTimeSlots = [
-  "09:00", "09:30", 
-  "10:00", "10:30",
-  "11:00", "11:30",
-  "13:00", "13:30",
-  "14:00", "14:30",
-  "15:00", "15:30"
+const mockLabLocations = [
+  "Главная лаборатория - ул. Ленина, 10",
+  "Филиал №1 - ул. Мира, 25",
+  "Филиал №2 - пр. Победы, 78",
+  "Мобильный пункт - ТЦ 'Солнечный'"
 ];
 
-type BookAppointmentDialogProps = {
+type SubmitTestDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSubmit: (data: any) => void;
-  selectedDate?: Date;
 };
 
-export const BookAppointmentDialog = ({ 
+export const SubmitTestDialog = ({ 
   open, 
   onOpenChange, 
-  onSubmit,
-  selectedDate = new Date()
-}: BookAppointmentDialogProps) => {
+  onSubmit 
+}: SubmitTestDialogProps) => {
   const [formData, setFormData] = useState({
     name: "",
     phone: "",
-    doctor: "",
-    date: selectedDate,
-    time: "",
+    testType: "",
+    location: "",
+    date: new Date(),
     comment: ""
   });
   
@@ -60,10 +58,10 @@ export const BookAppointmentDialog = ({
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle className="text-lg font-semibold text-clinic-dark">
-            Запись на приём
+            Запись на сдачу анализов
           </DialogTitle>
           <DialogDescription className="text-sm text-gray-500">
-            Заполните форму для записи на приём
+            Заполните форму для записи на сдачу анализов
           </DialogDescription>
         </DialogHeader>
         
@@ -91,19 +89,19 @@ export const BookAppointmentDialog = ({
           </div>
           
           <div className="space-y-2">
-            <Label htmlFor="doctor">Выберите врача</Label>
+            <Label htmlFor="testType">Тип анализа</Label>
             <Select 
-              value={formData.doctor}
-              onValueChange={(value) => handleChange("doctor", value)}
+              value={formData.testType}
+              onValueChange={(value) => handleChange("testType", value)}
               required
             >
-              <SelectTrigger id="doctor">
-                <SelectValue placeholder="Выберите врача" />
+              <SelectTrigger id="testType">
+                <SelectValue placeholder="Выберите тип анализа" />
               </SelectTrigger>
               <SelectContent>
-                {mockDoctors.map((doctor, index) => (
-                  <SelectItem key={index} value={doctor}>
-                    {doctor}
+                {mockTestTypes.map((test, index) => (
+                  <SelectItem key={index} value={test}>
+                    {test}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -111,35 +109,35 @@ export const BookAppointmentDialog = ({
           </div>
           
           <div className="space-y-2">
-            <Label>Дата приёма</Label>
+            <Label htmlFor="location">Пункт сдачи</Label>
+            <Select 
+              value={formData.location}
+              onValueChange={(value) => handleChange("location", value)}
+              required
+            >
+              <SelectTrigger id="location">
+                <SelectValue placeholder="Выберите пункт сдачи" />
+              </SelectTrigger>
+              <SelectContent>
+                {mockLabLocations.map((location, index) => (
+                  <SelectItem key={index} value={location}>
+                    {location}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          
+          <div className="space-y-2">
+            <Label>Дата сдачи</Label>
             <Input 
               value={format(formData.date, "dd.MM.yyyy")}
               readOnly
               className="bg-gray-50"
             />
             <p className="text-xs text-gray-500">
-              Дата выбрана в календаре. Вернитесь к календарю для изменения даты.
+              По умолчанию установлена текущая дата. Для изменения, обратитесь к администратору.
             </p>
-          </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="time">Выберите время</Label>
-            <Select 
-              value={formData.time}
-              onValueChange={(value) => handleChange("time", value)}
-              required
-            >
-              <SelectTrigger id="time">
-                <SelectValue placeholder="Выберите время" />
-              </SelectTrigger>
-              <SelectContent>
-                {mockTimeSlots.map((time, index) => (
-                  <SelectItem key={index} value={time}>
-                    {time}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
           </div>
           
           <div className="space-y-2">
@@ -148,7 +146,7 @@ export const BookAppointmentDialog = ({
               id="comment" 
               value={formData.comment}
               onChange={(e) => handleChange("comment", e.target.value)}
-              placeholder="Опишите причину обращения"
+              placeholder="Дополнительная информация"
             />
           </div>
           
