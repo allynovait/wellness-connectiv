@@ -1,6 +1,7 @@
-
 import { useState, useEffect } from "react";
-import { Thermometer } from "lucide-react";
+import { Thermometer, UserRound } from "lucide-react";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { PatientProfileDialog } from "@/components/PatientProfileDialog";
 
 export const PatientHeader = () => {
   const [weather, setWeather] = useState<{
@@ -10,6 +11,8 @@ export const PatientHeader = () => {
     temp: null,
     loading: true
   });
+  
+  const [profileOpen, setProfileOpen] = useState(false);
 
   useEffect(() => {
     const fetchWeather = async () => {
@@ -49,14 +52,19 @@ export const PatientHeader = () => {
         </div>
       </div>
       <div className="flex items-center gap-2">
-        <div className="w-8 h-8 rounded-full bg-clinic-light flex items-center justify-center text-clinic-primary font-semibold">
-          ИИ
+        <div 
+          className="w-8 h-8 rounded-full bg-clinic-light flex items-center justify-center text-clinic-primary font-semibold cursor-pointer"
+          onClick={() => setProfileOpen(true)}
+        >
+          <UserRound className="w-5 h-5" />
         </div>
         <div>
           <p className="font-medium text-clinic-dark">Иван Иванов</p>
           <p className="text-sm text-gray-500">Карта пациента #12345</p>
         </div>
       </div>
+
+      <PatientProfileDialog open={profileOpen} onOpenChange={setProfileOpen} />
     </div>
   );
 };
