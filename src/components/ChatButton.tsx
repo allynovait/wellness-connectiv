@@ -30,6 +30,7 @@ export const ChatButton = () => {
       <ChatDrawer 
         open={drawerOpen}
         onClose={handleCloseDrawer}
+        initialDoctor={null}
       />
     </>
   );

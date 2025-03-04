@@ -28,6 +28,7 @@ export const DiagnosisDetailsDialog = ({
   diagnosis 
 }: DiagnosisDetailsProps) => {
   const [chatDrawerOpen, setChatDrawerOpen] = useState(false);
+  const [selectedDoctor, setSelectedDoctor] = useState<{id: number, name: string, specialty: string} | null>(null);
   const placeholderText = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nullam vehicula ipsum a arcu cursus vitae congue mauris rhoncus. Aenean et justo at enim facilisis gravida. Sed diam dolor, elementum et lobortis a, consectetur a orci. Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia curae; Donec lacinia sapien ut risus fermentum, non luctus massa condimentum. Maecenas pellentesque elit at turpis finibus, in elementum mi tincidunt. Cras ultricies enim quis sollicitudin fermentum. Quisque in sapien non nulla condimentum dictum. Ut interdum tellus vitae justo aliquam pellentesque.";
   
   // Default doctor information if not provided
@@ -39,6 +40,7 @@ export const DiagnosisDetailsDialog = ({
 
   const handleOpenChat = () => {
     onOpenChange(false); // Close diagnosis dialog
+    setSelectedDoctor(doctorInfo); // Set the selected doctor to the one from this diagnosis
     setChatDrawerOpen(true);
   };
   
@@ -109,6 +111,7 @@ export const DiagnosisDetailsDialog = ({
       <ChatDrawer 
         open={chatDrawerOpen}
         onClose={() => setChatDrawerOpen(false)}
+        initialDoctor={selectedDoctor}
       />
     </>
   );

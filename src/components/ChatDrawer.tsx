@@ -1,4 +1,3 @@
-
 import { useState, useRef, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { MessageSquare, ChevronLeft, Send, User, X } from "lucide-react";
@@ -43,12 +42,20 @@ const mockChatMessages = [
 type ChatDrawerProps = {
   open: boolean;
   onClose: () => void;
+  initialDoctor?: Doctor | null;
 };
 
-export const ChatDrawer = ({ open, onClose }: ChatDrawerProps) => {
+export const ChatDrawer = ({ open, onClose, initialDoctor = null }: ChatDrawerProps) => {
   const [selectedDoctor, setSelectedDoctor] = useState<Doctor | null>(null);
   const [messageText, setMessageText] = useState("");
   const drawerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (open && initialDoctor) {
+      const foundDoctor = mockDoctors.find(d => d.id === initialDoctor.id);
+      setSelectedDoctor(foundDoctor || initialDoctor);
+    }
+  }, [open, initialDoctor]);
 
   const handleDoctorSelect = (doctor: Doctor) => {
     setSelectedDoctor(doctor);
@@ -60,13 +67,11 @@ export const ChatDrawer = ({ open, onClose }: ChatDrawerProps) => {
 
   const handleSendMessage = () => {
     if (messageText.trim()) {
-      // In a real app, you would send the message to the API
       console.log("Sending message to doctor:", selectedDoctor?.id, messageText);
       setMessageText("");
     }
   };
 
-  // Handle click outside to close drawer
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (drawerRef.current && !drawerRef.current.contains(event.target as Node) && open) {
