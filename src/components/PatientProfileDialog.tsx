@@ -4,6 +4,13 @@ import { Button } from "@/components/ui/button";
 import { X } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { useState } from "react";
+import { 
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger 
+} from "@/components/ui/tooltip";
 
 // Mock patient data
 const patientData = {
@@ -47,7 +54,63 @@ type PatientProfileDialogProps = {
   onOpenChange: (open: boolean) => void;
 };
 
+type VisitDetailsProps = {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  visitData: {
+    date: string;
+    doctor: string;
+    type: string;
+    details?: string;
+  };
+};
+
+const VisitDetailsDialog = ({ open, onOpenChange, visitData }: VisitDetailsProps) => {
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-[500px]">
+        <div className="flex items-center justify-between">
+          <h2 className="text-xl font-medium">Детали посещения</h2>
+          <Button variant="ghost" size="icon" onClick={() => onOpenChange(false)}>
+            <X className="h-5 w-5" />
+          </Button>
+        </div>
+        
+        <div className="space-y-4 mt-4">
+          <div className="bg-clinic-light p-4 rounded-md">
+            <p className="font-medium">{visitData.doctor}</p>
+            <div className="flex justify-between mt-1">
+              <p className="text-sm text-gray-600">{visitData.type}</p>
+              <p className="text-sm font-medium">{visitData.date}</p>
+            </div>
+          </div>
+          
+          <div>
+            <h3 className="text-md font-medium mb-2">Заключение врача:</h3>
+            <p className="text-sm">{visitData.details || "Пациент осмотрен. Состояние удовлетворительное. Даны рекомендации по лечению и профилактике. Назначены анализы для уточнения состояния здоровья."}</p>
+          </div>
+          
+          <div>
+            <h3 className="text-md font-medium mb-2">Назначения:</h3>
+            <p className="text-sm">- Общий анализ крови</p>
+            <p className="text-sm">- Консультация узкого специалиста</p>
+            <p className="text-sm">- Контрольный осмотр через 2 недели</p>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
 export function PatientProfileDialog({ open, onOpenChange }: PatientProfileDialogProps) {
+  const [visitDialogOpen, setVisitDialogOpen] = useState(false);
+  const [selectedVisit, setSelectedVisit] = useState<typeof patientData.recentVisits[0] | null>(null);
+
+  const handleVisitClick = (visit: typeof patientData.recentVisits[0]) => {
+    setSelectedVisit(visit);
+    setVisitDialogOpen(true);
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-full w-full h-full max-h-full rounded-none p-0 flex flex-col overflow-hidden sm:max-w-full sm:rounded-none">
@@ -58,17 +121,17 @@ export function PatientProfileDialog({ open, onOpenChange }: PatientProfileDialo
           </Button>
         </div>
         
-        <div className="flex-1 overflow-y-auto p-4 space-y-6">
+        <div className="flex-1 overflow-y-auto p-4 space-y-4">
           {/* Personal Information */}
           <Card>
-            <CardContent className="p-6">
-              <div className="flex items-start gap-6">
+            <CardContent className="p-5">
+              <div className="flex flex-col">
                 <img 
                   src={patientData.personalInfo.photo} 
                   alt={patientData.personalInfo.fullName} 
-                  className="w-32 h-32 object-cover rounded-md"
+                  className="w-full h-auto object-cover rounded-md mb-4 max-h-[200px] object-contain bg-gray-50"
                 />
-                <div className="space-y-2">
+                <div className="space-y-2 mt-2">
                   <h3 className="text-xl font-semibold">{patientData.personalInfo.fullName}</h3>
                   <p className="text-gray-600"><span className="font-medium">Дата рождения:</span> {patientData.personalInfo.birthDate}</p>
                   <p className="text-gray-600"><span className="font-medium">Пол:</span> {patientData.personalInfo.gender}</p>
@@ -81,8 +144,8 @@ export function PatientProfileDialog({ open, onOpenChange }: PatientProfileDialo
 
           {/* Document Information */}
           <Card>
-            <CardContent className="p-6">
-              <h3 className="text-lg font-semibold mb-4">Документы</h3>
+            <CardContent className="p-5">
+              <h3 className="text-lg font-semibold mb-3">Документы</h3>
               
               <div className="space-y-3">
                 <div>
@@ -92,14 +155,14 @@ export function PatientProfileDialog({ open, onOpenChange }: PatientProfileDialo
                   <p className="text-gray-600">Дата выдачи: {patientData.documents.passport.issuedDate}</p>
                 </div>
                 
-                <Separator />
+                <Separator className="my-2" />
                 
                 <div>
                   <p className="font-medium">СНИЛС:</p>
                   <p className="text-gray-600">{patientData.documents.snils}</p>
                 </div>
                 
-                <Separator />
+                <Separator className="my-2" />
                 
                 <div>
                   <p className="font-medium">ИНН:</p>
@@ -111,21 +174,33 @@ export function PatientProfileDialog({ open, onOpenChange }: PatientProfileDialo
 
           {/* Recent Doctor Visits */}
           <Card>
-            <CardContent className="p-6">
-              <h3 className="text-lg font-semibold mb-4">История посещений за неделю</h3>
+            <CardContent className="p-5">
+              <h3 className="text-lg font-semibold mb-3">История посещений за неделю</h3>
               
               {patientData.recentVisits.length > 0 ? (
                 <div className="space-y-3">
                   {patientData.recentVisits.map((visit, index) => (
-                    <div key={index} className="flex justify-between items-center bg-gray-50 p-3 rounded-md">
-                      <div>
-                        <p className="font-medium">{visit.doctor}</p>
-                        <p className="text-sm text-gray-600">{visit.type}</p>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-sm font-medium">{visit.date}</p>
-                      </div>
-                    </div>
+                    <TooltipProvider key={index}>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <div 
+                            className="flex justify-between items-center bg-gray-50 p-3 rounded-md cursor-pointer hover:bg-gray-100 transition-colors"
+                            onClick={() => handleVisitClick(visit)}
+                          >
+                            <div>
+                              <p className="font-medium">{visit.doctor}</p>
+                              <p className="text-sm text-gray-600">{visit.type}</p>
+                            </div>
+                            <div className="text-right">
+                              <p className="text-sm font-medium">{visit.date}</p>
+                            </div>
+                          </div>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Нажмите для просмотра деталей</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
                   ))}
                 </div>
               ) : (
@@ -136,8 +211,8 @@ export function PatientProfileDialog({ open, onOpenChange }: PatientProfileDialo
 
           {/* Recent Tests */}
           <Card>
-            <CardContent className="p-6">
-              <h3 className="text-lg font-semibold mb-4">Анализы за неделю</h3>
+            <CardContent className="p-5">
+              <h3 className="text-lg font-semibold mb-3">Анализы за неделю</h3>
               
               {patientData.recentTests.length > 0 ? (
                 <div className="space-y-3">
@@ -161,8 +236,8 @@ export function PatientProfileDialog({ open, onOpenChange }: PatientProfileDialo
 
           {/* Paid Services */}
           <Card>
-            <CardContent className="p-6">
-              <h3 className="text-lg font-semibold mb-4">Платные услуги за неделю</h3>
+            <CardContent className="p-5">
+              <h3 className="text-lg font-semibold mb-3">Платные услуги за неделю</h3>
               
               {patientData.paidServices.length > 0 ? (
                 <div className="space-y-3">
@@ -185,6 +260,14 @@ export function PatientProfileDialog({ open, onOpenChange }: PatientProfileDialo
           </Card>
         </div>
       </DialogContent>
+      
+      {selectedVisit && (
+        <VisitDetailsDialog
+          open={visitDialogOpen}
+          onOpenChange={setVisitDialogOpen}
+          visitData={selectedVisit}
+        />
+      )}
     </Dialog>
   );
 }
