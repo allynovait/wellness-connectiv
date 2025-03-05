@@ -1,4 +1,3 @@
-
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { X } from "lucide-react";
@@ -116,9 +115,6 @@ export function PatientProfileDialog({ open, onOpenChange }: PatientProfileDialo
       <DialogContent className="max-w-full w-full h-full max-h-full rounded-none p-0 flex flex-col overflow-hidden sm:max-w-full sm:rounded-none">
         <div className="flex items-center justify-between bg-clinic-primary text-white p-4">
           <h2 className="text-xl font-medium">Профиль пациента</h2>
-          <Button variant="ghost" size="icon" onClick={() => onOpenChange(false)} className="text-white hover:bg-clinic-secondary">
-            <X className="h-6 w-6" />
-          </Button>
         </div>
         
         <div className="flex-1 overflow-y-auto p-4 space-y-4">
