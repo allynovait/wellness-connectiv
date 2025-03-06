@@ -1,9 +1,11 @@
+
 import { useState, useEffect } from "react";
 import { Thermometer, UserRound } from "lucide-react";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { PatientProfileDialog } from "@/components/PatientProfileDialog";
+import { useAuth } from "@/contexts/AuthContext";
 
 export const PatientHeader = () => {
+  const { user } = useAuth();
   const [weather, setWeather] = useState<{
     temp: number | null;
     loading: boolean;
@@ -59,8 +61,8 @@ export const PatientHeader = () => {
           <UserRound className="w-5 h-5" />
         </div>
         <div>
-          <p className="font-medium text-clinic-dark">Иван Иванов</p>
-          <p className="text-sm text-gray-500">Карта пациента #12345</p>
+          <p className="font-medium text-clinic-dark">{user?.full_name || 'Загрузка...'}</p>
+          <p className="text-sm text-gray-500">Карта пациента #{user?.card_number || '...'}</p>
         </div>
       </div>
 

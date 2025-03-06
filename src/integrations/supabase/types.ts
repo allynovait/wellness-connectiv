@@ -9,6 +9,95 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      documents: {
+        Row: {
+          created_at: string
+          id: string
+          inn: string | null
+          passport_issued_by: string | null
+          passport_issued_date: string | null
+          passport_number: string | null
+          passport_series: string | null
+          snils: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          inn?: string | null
+          passport_issued_by?: string | null
+          passport_issued_date?: string | null
+          passport_number?: string | null
+          passport_series?: string | null
+          snils?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          inn?: string | null
+          passport_issued_by?: string | null
+          passport_issued_date?: string | null
+          passport_number?: string | null
+          passport_series?: string | null
+          snils?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "documents_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          attachment_date: string | null
+          birth_date: string | null
+          card_number: string | null
+          clinic: string | null
+          created_at: string
+          full_name: string
+          gender: string | null
+          id: string
+          photo: string | null
+          role: string
+          updated_at: string
+        }
+        Insert: {
+          attachment_date?: string | null
+          birth_date?: string | null
+          card_number?: string | null
+          clinic?: string | null
+          created_at?: string
+          full_name: string
+          gender?: string | null
+          id: string
+          photo?: string | null
+          role?: string
+          updated_at?: string
+        }
+        Update: {
+          attachment_date?: string | null
+          birth_date?: string | null
+          card_number?: string | null
+          clinic?: string | null
+          created_at?: string
+          full_name?: string
+          gender?: string | null
+          id?: string
+          photo?: string | null
+          role?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       server_commands: {
         Row: {
           command: string
