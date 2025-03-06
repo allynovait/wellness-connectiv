@@ -46,6 +46,10 @@ const Auth = () => {
     if (verified === 'true') {
       setActiveTab('login');
     }
+    
+    // Log URL parameters for debugging
+    console.log("URL params:", { verificationStatus, verified });
+    
   }, [verificationStatus, verified, registerEmail]);
 
   // Cooldown timer effect
@@ -97,6 +101,7 @@ const Auth = () => {
       setRegisterLoading(true);
       await signUp(registerEmail, registerPassword, registerName, registerRole);
       setVerificationEmail(registerEmail);
+      console.log("Registration complete, verification email should be sent");
     } catch (error) {
       console.error("Registration error:", error);
     } finally {
@@ -110,7 +115,9 @@ const Auth = () => {
 
     try {
       setResendLoading(true);
+      console.log("Resending verification email to:", verificationEmail);
       await resendVerificationEmail(verificationEmail);
+      console.log("Resend verification email request completed");
       // Start cooldown after successful resend
       setCooldownTime(60); // 60 seconds = 1 minute
     } catch (error) {

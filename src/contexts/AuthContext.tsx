@@ -1,22 +1,9 @@
-
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { supabase, getAuthRedirectOptions } from "@/integrations/supabase/client";
 import { Session } from "@supabase/supabase-js";
 import { useNavigate } from "react-router-dom";
 import { UserProfile, UserDocuments } from "@/types/auth";
 import { toast } from "sonner";
-
-// Helper function to get the correct redirect URL
-const getRedirectUrl = () => {
-  // In browser environment
-  if (typeof window !== 'undefined') {
-    // Extract the base URL (protocol + hostname + port)
-    const baseUrl = window.location.origin;
-    return `${baseUrl}/auth?verified=true`;
-  }
-  // Fallback if not in browser
-  return 'https://tajrxpkgtmfkggwbgjgs.lovableproject.com/auth?verified=true';
-};
 
 interface AuthContextType {
   session: Session | null;
@@ -85,7 +72,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const fetchUserData = async (userId: string) => {
     try {
-      // Fetch user profile
       const { data: profileData, error: profileError } = await supabase
         .from("profiles")
         .select("*")
@@ -95,7 +81,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (profileError) throw profileError;
       if (profileData) setUser(profileData as UserProfile);
 
-      // Fetch user documents
       const { data: docsData, error: docsError } = await supabase
         .from("documents")
         .select("*")
@@ -145,6 +130,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signUp = async (email: string, password: string, full_name: string, role: string) => {
     try {
       setLoading(true);
+      
+      const redirectOptions = getAuthRedirectOptions();
+      console.log("Signup redirect options:", redirectOptions);
+      
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -153,11 +142,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             full_name,
             role,
           },
-          ...getAuthRedirectOptions(),
+          ...redirectOptions,
         },
       });
       
       if (error) throw error;
+      
+      console.log("Signup response:", data);
       
       if (data?.user) {
         setIsEmailVerified(false);
@@ -165,6 +156,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         navigate("/auth?verification=pending");
       }
     } catch (error: any) {
+      console.error("Signup error:", error);
       toast.error(error.message || "Ошибка регистрации");
       throw error;
     } finally {
@@ -175,16 +167,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const resendVerificationEmail = async (email: string) => {
     try {
       setLoading(true);
-      const { error } = await supabase.auth.resend({
+      
+      const redirectOptions = getAuthRedirectOptions();
+      console.log("Resend verification redirect options:", redirectOptions);
+      
+      const { error, data } = await supabase.auth.resend({
         type: 'signup',
         email,
-        options: getAuthRedirectOptions(),
+        options: redirectOptions,
       });
+      
+      console.log("Resend verification response:", data);
       
       if (error) throw error;
       
       toast.success("Письмо для подтверждения отправлено повторно");
     } catch (error: any) {
+      console.error("Resend verification error:", error);
       toast.error(error.message || "Ошибка отправки письма");
       throw error;
     } finally {
@@ -234,7 +233,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (!user?.id) throw new Error("Пользователь не найден");
 
       if (userDocuments?.id) {
-        // Update existing documents
         const updates = {
           ...documents,
           updated_at: new Date().toISOString(),
@@ -247,7 +245,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         if (error) throw error;
       } else {
-        // Insert new documents
         const newDocument = {
           ...documents,
           user_id: user.id,
