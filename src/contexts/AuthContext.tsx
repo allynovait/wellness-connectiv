@@ -6,6 +6,18 @@ import { useNavigate } from "react-router-dom";
 import { UserProfile, UserDocuments } from "@/types/auth";
 import { toast } from "sonner";
 
+// Helper function to get the correct redirect URL
+const getRedirectUrl = () => {
+  // In browser environment
+  if (typeof window !== 'undefined') {
+    // Extract the base URL (protocol + hostname + port)
+    const baseUrl = window.location.origin;
+    return `${baseUrl}/auth?verified=true`;
+  }
+  // Fallback if not in browser
+  return 'https://tajrxpkgtmfkggwbgjgs.lovableproject.com/auth?verified=true';
+};
+
 interface AuthContextType {
   session: Session | null;
   user: UserProfile | null;
@@ -141,7 +153,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             full_name,
             role,
           },
-          emailRedirectTo: window.location.origin + "/auth?verified=true",
+          emailRedirectTo: getRedirectUrl(),
         },
       });
       
@@ -167,7 +179,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         type: 'signup',
         email,
         options: {
-          emailRedirectTo: window.location.origin + "/auth?verified=true",
+          emailRedirectTo: getRedirectUrl(),
         }
       });
       
