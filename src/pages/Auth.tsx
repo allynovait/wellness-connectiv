@@ -35,6 +35,8 @@ const Auth = () => {
   // Verification
   const [verificationEmail, setVerificationEmail] = useState("");
   const [resendLoading, setResendLoading] = useState(false);
+  const [cooldownTime, setCooldownTime] = useState(0);
+  const [isCooldown, setIsCooldown] = useState(false);
 
   useEffect(() => {
     if (verificationStatus === 'pending') {
@@ -45,6 +47,29 @@ const Auth = () => {
       setActiveTab('login');
     }
   }, [verificationStatus, verified, registerEmail]);
+
+  // Cooldown timer effect
+  useEffect(() => {
+    let timer: number | undefined;
+    
+    if (cooldownTime > 0) {
+      setIsCooldown(true);
+      timer = window.setInterval(() => {
+        setCooldownTime((prevTime) => {
+          const newTime = prevTime - 1;
+          if (newTime <= 0) {
+            setIsCooldown(false);
+            return 0;
+          }
+          return newTime;
+        });
+      }, 1000);
+    }
+    
+    return () => {
+      if (timer) clearInterval(timer);
+    };
+  }, [cooldownTime]);
 
   if (session && !loading && isEmailVerified) {
     return <Navigate to="/" replace />;
@@ -81,16 +106,24 @@ const Auth = () => {
 
   const handleResendVerification = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!verificationEmail) return;
+    if (!verificationEmail || isCooldown) return;
 
     try {
       setResendLoading(true);
       await resendVerificationEmail(verificationEmail);
+      // Start cooldown after successful resend
+      setCooldownTime(60); // 60 seconds = 1 minute
     } catch (error) {
       console.error("Error resending verification:", error);
     } finally {
       setResendLoading(false);
     }
+  };
+
+  const formatCooldownTime = () => {
+    const minutes = Math.floor(cooldownTime / 60);
+    const seconds = cooldownTime % 60;
+    return `${seconds < 10 ? '0' + seconds : seconds}`;
   };
 
   const renderVerificationAlert = () => {
@@ -114,7 +147,7 @@ const Auth = () => {
               <AlertDescription className="text-yellow-600">
                 Мы отправили письмо для подтверждения на ваш email. Пожалуйста, проверьте вашу почту и перейдите по ссылке в письме.
                 <div className="mt-3">
-                  <form onSubmit={handleResendVerification} className="flex items-end gap-2">
+                  <form onSubmit={handleResendVerification} className="flex flex-col md:flex-row md:items-end md:gap-2 space-y-2 md:space-y-0">
                     <div className="flex-1">
                       <Label htmlFor="verification-email">Email для повторной отправки</Label>
                       <Input
@@ -124,17 +157,20 @@ const Auth = () => {
                         onChange={(e) => setVerificationEmail(e.target.value)}
                         placeholder="Введите ваш email"
                         required
+                        className="w-full"
                       />
                     </div>
                     <Button 
                       type="submit" 
                       variant="outline" 
                       size="sm"
-                      disabled={resendLoading || !verificationEmail}
-                      className="flex items-center gap-1"
+                      disabled={resendLoading || !verificationEmail || isCooldown}
+                      className="flex items-center gap-1 w-full md:w-auto"
                     >
-                      {resendLoading ? "Отправка..." : "Отправить повторно"}
-                      {!resendLoading && <RefreshCw className="h-4 w-4" />}
+                      {resendLoading ? "Отправка..." : 
+                       isCooldown ? `Подождите ${formatCooldownTime()}с` : 
+                       "Отправить повторно"}
+                      {!resendLoading && !isCooldown && <RefreshCw className="h-4 w-4" />}
                     </Button>
                   </form>
                 </div>
