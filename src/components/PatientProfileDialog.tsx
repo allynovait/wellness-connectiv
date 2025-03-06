@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { PersonalInfoCard } from "./patient/PersonalInfoCard";
@@ -40,7 +39,7 @@ export function PatientProfileDialog({ open, onOpenChange }: PatientProfileDialo
   // Convert user and userDocuments to the format expected by the components
   const patientData: PatientData = {
     personalInfo: {
-      fullName: user?.full_name || "Загрузка...",
+      fullName: user?.full_name || "", // Remove "Loading..." default
       birthDate: user?.birth_date || "Н/Д",
       gender: user?.gender || "Н/Д",
       photo: user?.photo || "/placeholder.svg"
@@ -100,6 +99,25 @@ export function PatientProfileDialog({ open, onOpenChange }: PatientProfileDialo
           </div>
           
           <div className="flex-1 overflow-y-auto p-4 space-y-4">
+            {/* Moved buttons block - now appears before personal information */}
+            <div className="flex gap-2">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="text-clinic-primary border-clinic-primary hover:bg-clinic-light"
+                onClick={handleEdit}
+              >
+                <Pencil className="h-4 w-4 mr-1" /> Редактировать профиль
+              </Button>
+              <Button 
+                variant="destructive" 
+                size="sm" 
+                onClick={handleLogout}
+              >
+                <LogOut className="h-4 w-4 mr-1" /> Выйти
+              </Button>
+            </div>
+
             {/* Personal Information */}
             <PersonalInfoCard 
               personalInfo={patientData.personalInfo} 
