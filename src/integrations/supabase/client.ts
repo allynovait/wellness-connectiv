@@ -26,7 +26,11 @@ export const supabase = createClient<Database>(
       persistSession: true,
       detectSessionInUrl: true,
       flowType: 'pkce',
-      redirectTo: getRedirectUrl()
     }
   }
 );
+
+// Add redirection URL to sign-up and auth options
+export const getAuthRedirectOptions = () => ({
+  emailRedirectTo: getRedirectUrl()
+});

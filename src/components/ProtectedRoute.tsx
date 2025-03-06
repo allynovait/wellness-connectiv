@@ -1,5 +1,5 @@
 
-import { Navigate } from "react-router-dom";
+import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 
 interface ProtectedRouteProps {
@@ -8,6 +8,10 @@ interface ProtectedRouteProps {
 
 export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   const { session, loading, isEmailVerified } = useAuth();
+  const location = useLocation();
+  
+  // Check if we're returning from email verification
+  const isVerifiedRedirect = location.search.includes('verified=true');
 
   if (loading) {
     return (
@@ -16,6 +20,12 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
         <div className="text-clinic-primary font-medium">Загрузка...</div>
       </div>
     );
+  }
+  
+  // If we're returning from email verification, don't redirect immediately
+  // Give the auth state time to update
+  if (isVerifiedRedirect) {
+    return <>{children}</>;
   }
   
   if (!session) {

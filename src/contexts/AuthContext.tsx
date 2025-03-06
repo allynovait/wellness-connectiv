@@ -1,6 +1,6 @@
 
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase, getAuthRedirectOptions } from "@/integrations/supabase/client";
 import { Session } from "@supabase/supabase-js";
 import { useNavigate } from "react-router-dom";
 import { UserProfile, UserDocuments } from "@/types/auth";
@@ -153,7 +153,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             full_name,
             role,
           },
-          emailRedirectTo: getRedirectUrl(),
+          ...getAuthRedirectOptions(),
         },
       });
       
@@ -178,9 +178,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const { error } = await supabase.auth.resend({
         type: 'signup',
         email,
-        options: {
-          emailRedirectTo: getRedirectUrl(),
-        }
+        options: getAuthRedirectOptions(),
       });
       
       if (error) throw error;
@@ -211,9 +209,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       if (!user?.id) throw new Error("Пользователь не найден");
 
+      const updates = {
+        ...profile,
+        id: user.id,
+        updated_at: new Date().toISOString(),
+      };
+
       const { error } = await supabase
         .from("profiles")
-        .update(profile)
+        .update(updates)
         .eq("id", user.id);
 
       if (error) throw error;
@@ -231,20 +235,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       if (userDocuments?.id) {
         // Update existing documents
+        const updates = {
+          ...documents,
+          updated_at: new Date().toISOString(),
+        };
+
         const { error } = await supabase
           .from("documents")
-          .update(documents)
+          .update(updates)
           .eq("id", userDocuments.id);
 
         if (error) throw error;
       } else {
         // Insert new documents
+        const newDocument = {
+          ...documents,
+          user_id: user.id,
+        };
+
         const { error } = await supabase
           .from("documents")
-          .insert({
-            ...documents,
-            user_id: user.id,
-          });
+          .insert(newDocument);
 
         if (error) throw error;
       }
