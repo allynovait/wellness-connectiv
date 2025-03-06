@@ -98,6 +98,39 @@ export type Database = {
         }
         Relationships: []
       }
+      resumes: {
+        Row: {
+          created_at: string | null
+          driving_categories: string[] | null
+          experience: number | null
+          full_name: string
+          id: string
+          photo: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          driving_categories?: string[] | null
+          experience?: number | null
+          full_name: string
+          id?: string
+          photo?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          driving_categories?: string[] | null
+          experience?: number | null
+          full_name?: string
+          id?: string
+          photo?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       server_commands: {
         Row: {
           command: string
@@ -172,6 +205,39 @@ export type Database = {
         }
         Relationships: []
       }
+      user_data: {
+        Row: {
+          bank_card: string | null
+          created_at: string | null
+          id: string
+          name: string
+          passport_info: string | null
+          phone: string | null
+          rating: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          bank_card?: string | null
+          created_at?: string | null
+          id: string
+          name: string
+          passport_info?: string | null
+          phone?: string | null
+          rating?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          bank_card?: string | null
+          created_at?: string | null
+          id?: string
+          name?: string
+          passport_info?: string | null
+          phone?: string | null
+          rating?: number | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       user_profiles: {
         Row: {
           created_at: string
@@ -198,6 +264,80 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      vehicles: {
+        Row: {
+          color: string | null
+          created_at: string | null
+          driver_license: string | null
+          id: string
+          insurance_number: string | null
+          license_plate: string
+          model: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string | null
+          driver_license?: string | null
+          id?: string
+          insurance_number?: string | null
+          license_plate: string
+          model: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          color?: string | null
+          created_at?: string | null
+          driver_license?: string | null
+          id?: string
+          insurance_number?: string | null
+          license_plate?: string
+          model?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      work_experience: {
+        Row: {
+          company: string
+          created_at: string | null
+          duration: string
+          id: string
+          position: string
+          resume_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          company: string
+          created_at?: string | null
+          duration: string
+          id?: string
+          position: string
+          resume_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          company?: string
+          created_at?: string | null
+          duration?: string
+          id?: string
+          position?: string
+          resume_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "work_experience_resume_id_fkey"
+            columns: ["resume_id"]
+            isOneToOne: false
+            referencedRelation: "resumes"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
