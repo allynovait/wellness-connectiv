@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -7,12 +7,18 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Navigate } from "react-router-dom";
+import { Navigate, useLocation } from "react-router-dom";
 import { UserRole } from "@/types/auth";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { AlertCircle, CheckCircle, RefreshCw } from "lucide-react";
 
 const Auth = () => {
-  const { signIn, signUp, session, loading } = useAuth();
+  const { signIn, signUp, session, loading, resendVerificationEmail, isEmailVerified } = useAuth();
   const [activeTab, setActiveTab] = useState<"login" | "register">("login");
+  const location = useLocation();
+  const queryParams = new URLSearchParams(location.search);
+  const verificationStatus = queryParams.get('verification');
+  const verified = queryParams.get('verified');
 
   // Login form
   const [loginEmail, setLoginEmail] = useState("");
@@ -25,8 +31,22 @@ const Auth = () => {
   const [registerName, setRegisterName] = useState("");
   const [registerRole, setRegisterRole] = useState<UserRole>("patient");
   const [registerLoading, setRegisterLoading] = useState(false);
+  
+  // Verification
+  const [verificationEmail, setVerificationEmail] = useState("");
+  const [resendLoading, setResendLoading] = useState(false);
 
-  if (session && !loading) {
+  useEffect(() => {
+    if (verificationStatus === 'pending') {
+      setVerificationEmail(registerEmail);
+    }
+    
+    if (verified === 'true') {
+      setActiveTab('login');
+    }
+  }, [verificationStatus, verified, registerEmail]);
+
+  if (session && !loading && isEmailVerified) {
     return <Navigate to="/" replace />;
   }
 
@@ -51,12 +71,80 @@ const Auth = () => {
     try {
       setRegisterLoading(true);
       await signUp(registerEmail, registerPassword, registerName, registerRole);
-      setActiveTab("login");
+      setVerificationEmail(registerEmail);
     } catch (error) {
       console.error("Registration error:", error);
     } finally {
       setRegisterLoading(false);
     }
+  };
+
+  const handleResendVerification = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!verificationEmail) return;
+
+    try {
+      setResendLoading(true);
+      await resendVerificationEmail(verificationEmail);
+    } catch (error) {
+      console.error("Error resending verification:", error);
+    } finally {
+      setResendLoading(false);
+    }
+  };
+
+  const renderVerificationAlert = () => {
+    if (verificationStatus === 'pending' || verified === 'true' || (session && !isEmailVerified)) {
+      return (
+        <Alert 
+          className={`mb-6 ${verified === 'true' ? 'bg-green-50 border-green-500' : 'bg-yellow-50 border-yellow-500'}`}
+        >
+          {verified === 'true' ? (
+            <>
+              <CheckCircle className="h-4 w-4 text-green-500" />
+              <AlertTitle className="text-green-700">Email подтвержден!</AlertTitle>
+              <AlertDescription className="text-green-600">
+                Ваш email успешно подтвержден. Теперь вы можете войти в систему.
+              </AlertDescription>
+            </>
+          ) : (
+            <>
+              <AlertCircle className="h-4 w-4 text-yellow-500" />
+              <AlertTitle className="text-yellow-700">Требуется подтверждение email</AlertTitle>
+              <AlertDescription className="text-yellow-600">
+                Мы отправили письмо для подтверждения на ваш email. Пожалуйста, проверьте вашу почту и перейдите по ссылке в письме.
+                <div className="mt-3">
+                  <form onSubmit={handleResendVerification} className="flex items-end gap-2">
+                    <div className="flex-1">
+                      <Label htmlFor="verification-email">Email для повторной отправки</Label>
+                      <Input
+                        id="verification-email"
+                        type="email"
+                        value={verificationEmail}
+                        onChange={(e) => setVerificationEmail(e.target.value)}
+                        placeholder="Введите ваш email"
+                        required
+                      />
+                    </div>
+                    <Button 
+                      type="submit" 
+                      variant="outline" 
+                      size="sm"
+                      disabled={resendLoading || !verificationEmail}
+                      className="flex items-center gap-1"
+                    >
+                      {resendLoading ? "Отправка..." : "Отправить повторно"}
+                      {!resendLoading && <RefreshCw className="h-4 w-4" />}
+                    </Button>
+                  </form>
+                </div>
+              </AlertDescription>
+            </>
+          )}
+        </Alert>
+      );
+    }
+    return null;
   };
 
   return (
@@ -70,6 +158,9 @@ const Auth = () => {
               className="h-16 object-contain mix-blend-multiply" 
             />
           </div>
+          
+          {renderVerificationAlert()}
+          
           <Tabs value={activeTab} onValueChange={(val) => setActiveTab(val as "login" | "register")}>
             <TabsList className="grid grid-cols-2 w-full mb-6">
               <TabsTrigger value="login">Вход</TabsTrigger>

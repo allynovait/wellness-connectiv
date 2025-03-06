@@ -11,12 +11,14 @@ interface AuthContextType {
   user: UserProfile | null;
   userDocuments: UserDocuments | null;
   loading: boolean;
+  isEmailVerified: boolean;
   signIn: (email: string, password: string) => Promise<void>;
   signUp: (email: string, password: string, full_name: string, role: string) => Promise<void>;
   signOut: () => Promise<void>;
   refreshUserData: () => Promise<void>;
   updateProfile: (profile: Partial<UserProfile>) => Promise<void>;
   updateDocuments: (documents: Partial<UserDocuments>) => Promise<void>;
+  resendVerificationEmail: (email: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -26,29 +28,43 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<UserProfile | null>(null);
   const [userDocuments, setUserDocuments] = useState<UserDocuments | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isEmailVerified, setIsEmailVerified] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
+        console.log("Auth state changed:", event, session?.user?.email);
         setSession(session);
+        
         if (session) {
+          setIsEmailVerified(session.user?.email_confirmed_at != null);
           await fetchUserData(session.user.id);
         } else {
           setUser(null);
           setUserDocuments(null);
+          setIsEmailVerified(false);
         }
         setLoading(false);
       }
     );
 
     const initSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      setSession(session);
-      if (session) {
-        await fetchUserData(session.user.id);
+      setLoading(true);
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        console.log("Initial session:", session?.user?.email);
+        setSession(session);
+        
+        if (session) {
+          setIsEmailVerified(session.user?.email_confirmed_at != null);
+          await fetchUserData(session.user.id);
+        }
+      } catch (error) {
+        console.error("Error getting session:", error);
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     };
 
     initSession();
@@ -62,17 +78,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         .from("profiles")
         .select("*")
         .eq("id", userId)
-        .single();
+        .maybeSingle();
 
       if (profileError) throw profileError;
-      setUser(profileData as UserProfile);
+      if (profileData) setUser(profileData as UserProfile);
 
       // Fetch user documents
       const { data: docsData, error: docsError } = await supabase
         .from("documents")
         .select("*")
         .eq("user_id", userId)
-        .single();
+        .maybeSingle();
 
       if (docsError && docsError.code !== "PGRST116") throw docsError;
       if (docsData) setUserDocuments(docsData as UserDocuments);
@@ -90,12 +106,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signIn = async (email: string, password: string) => {
     try {
       setLoading(true);
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+      
       if (error) throw error;
-      navigate("/");
-      toast.success("Успешный вход");
+      
+      if (data.user && !data.user.email_confirmed_at) {
+        setIsEmailVerified(false);
+        toast.warning("Необходимо подтвердить email. Проверьте свою почту.");
+      } else {
+        setIsEmailVerified(true);
+        navigate("/");
+        toast.success("Успешный вход");
+      }
     } catch (error: any) {
-      toast.error(error.message || "Ошибка входа");
+      if (error.message === "Email not confirmed") {
+        toast.error("Необходимо подтвердить email. Проверьте свою почту.");
+      } else {
+        toast.error(error.message || "Ошибка входа");
+      }
       throw error;
     } finally {
       setLoading(false);
@@ -105,7 +133,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signUp = async (email: string, password: string, full_name: string, role: string) => {
     try {
       setLoading(true);
-      const { error } = await supabase.auth.signUp({
+      const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
@@ -113,13 +141,41 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             full_name,
             role,
           },
+          emailRedirectTo: window.location.origin + "/auth?verified=true",
         },
       });
+      
       if (error) throw error;
-      toast.success("Регистрация успешна");
-      navigate("/auth");
+      
+      if (data?.user) {
+        setIsEmailVerified(false);
+        toast.success("Регистрация успешна. Проверьте вашу почту для подтверждения.");
+        navigate("/auth?verification=pending");
+      }
     } catch (error: any) {
       toast.error(error.message || "Ошибка регистрации");
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const resendVerificationEmail = async (email: string) => {
+    try {
+      setLoading(true);
+      const { error } = await supabase.auth.resend({
+        type: 'signup',
+        email,
+        options: {
+          emailRedirectTo: window.location.origin + "/auth?verified=true",
+        }
+      });
+      
+      if (error) throw error;
+      
+      toast.success("Письмо для подтверждения отправлено повторно");
+    } catch (error: any) {
+      toast.error(error.message || "Ошибка отправки письма");
       throw error;
     } finally {
       setLoading(false);
@@ -194,12 +250,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     user,
     userDocuments,
     loading,
+    isEmailVerified,
     signIn,
     signUp,
     signOut,
     refreshUserData,
     updateProfile,
     updateDocuments,
+    resendVerificationEmail,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
