@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { PersonalInfoCard } from "./patient/PersonalInfoCard";
 import { DocumentsCard } from "./patient/DocumentsCard";
 import { VisitsCard } from "./patient/VisitsCard";
@@ -40,7 +40,7 @@ export function PatientProfileDialog({ open, onOpenChange }: PatientProfileDialo
   // Convert user and userDocuments to the format expected by the components
   const patientData: PatientData = {
     personalInfo: {
-      fullName: user?.full_name || "", // Remove "Loading..." default
+      fullName: user?.full_name || "",
       birthDate: user?.birth_date || "Н/Д",
       gender: user?.gender || "Н/Д",
       photo: user?.photo || "/placeholder.svg"
@@ -79,12 +79,16 @@ export function PatientProfileDialog({ open, onOpenChange }: PatientProfileDialo
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent className="max-w-full w-full h-full max-h-full rounded-none p-0 flex flex-col overflow-hidden sm:max-w-full sm:rounded-none">
           <div className="flex items-center justify-between bg-clinic-primary text-white p-4">
-            <h2 className="text-xl font-medium">Профиль пациента</h2>
-            <div className="flex gap-2">
+            <DialogTitle className="text-xl font-medium text-white">Профиль пациента</DialogTitle>
+          </div>
+          
+          <div className="flex-1 overflow-y-auto p-4 space-y-4">
+            {/* Buttons moved above personal info card */}
+            <div className="flex justify-end gap-2 mb-2">
               <Button 
                 variant="outline" 
                 size="sm" 
-                className="text-white border-white hover:text-clinic-primary hover:bg-white"
+                className="border-clinic-primary text-clinic-primary hover:bg-clinic-primary hover:text-white"
                 onClick={handleEdit}
               >
                 <Pencil className="h-4 w-4 mr-1" /> Редактировать
@@ -97,9 +101,7 @@ export function PatientProfileDialog({ open, onOpenChange }: PatientProfileDialo
                 <LogOut className="h-4 w-4 mr-1" /> Выйти
               </Button>
             </div>
-          </div>
-          
-          <div className="flex-1 overflow-y-auto p-4 space-y-4">
+
             {/* Personal Information */}
             <PersonalInfoCard 
               personalInfo={patientData.personalInfo} 
