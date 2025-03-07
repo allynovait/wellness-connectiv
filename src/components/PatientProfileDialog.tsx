@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { PersonalInfoCard } from "./patient/PersonalInfoCard";
@@ -8,7 +9,7 @@ import { PaidServicesCard } from "./patient/PaidServicesCard";
 import { Button } from "@/components/ui/button";
 import { EditProfileDialog } from "./patient/EditProfileDialog";
 import { LogOut, Pencil } from "lucide-react";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/contexts/auth";
 import { PatientData } from "@/types/patient";
 
 type PatientProfileDialogProps = {

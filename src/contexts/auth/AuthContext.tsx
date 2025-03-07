@@ -1,26 +1,14 @@
-import { createContext, useContext, useState, useEffect, ReactNode } from "react";
+
+import { createContext, useState, useEffect, ReactNode } from "react";
 import { supabase, getAuthRedirectOptions } from "@/integrations/supabase/client";
 import { Session } from "@supabase/supabase-js";
 import { useNavigate } from "react-router-dom";
 import { UserProfile, UserDocuments } from "@/types/auth";
 import { toast } from "sonner";
+import { AuthContextType } from "./types";
+import { fetchUserData } from "./utils";
 
-interface AuthContextType {
-  session: Session | null;
-  user: UserProfile | null;
-  userDocuments: UserDocuments | null;
-  loading: boolean;
-  isEmailVerified: boolean;
-  signIn: (email: string, password: string) => Promise<void>;
-  signUp: (email: string, password: string, full_name: string, role: string) => Promise<void>;
-  signOut: () => Promise<void>;
-  refreshUserData: () => Promise<void>;
-  updateProfile: (profile: Partial<UserProfile>) => Promise<void>;
-  updateDocuments: (documents: Partial<UserDocuments>) => Promise<void>;
-  resendVerificationEmail: (email: string) => Promise<void>;
-}
-
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+export const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
@@ -38,7 +26,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         
         if (session) {
           setIsEmailVerified(session.user?.email_confirmed_at != null);
-          await fetchUserData(session.user.id);
+          const userData = await fetchUserData(session.user.id);
+          setUser(userData.user);
+          setUserDocuments(userData.userDocuments);
         } else {
           setUser(null);
           setUserDocuments(null);
@@ -57,7 +47,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         
         if (session) {
           setIsEmailVerified(session.user?.email_confirmed_at != null);
-          await fetchUserData(session.user.id);
+          const userData = await fetchUserData(session.user.id);
+          setUser(userData.user);
+          setUserDocuments(userData.userDocuments);
         }
       } catch (error) {
         console.error("Error getting session:", error);
@@ -70,33 +62,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => subscription.unsubscribe();
   }, []);
 
-  const fetchUserData = async (userId: string) => {
-    try {
-      const { data: profileData, error: profileError } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("id", userId)
-        .maybeSingle();
-
-      if (profileError) throw profileError;
-      if (profileData) setUser(profileData as UserProfile);
-
-      const { data: docsData, error: docsError } = await supabase
-        .from("documents")
-        .select("*")
-        .eq("user_id", userId)
-        .maybeSingle();
-
-      if (docsError && docsError.code !== "PGRST116") throw docsError;
-      if (docsData) setUserDocuments(docsData as UserDocuments);
-    } catch (error) {
-      console.error("Error fetching user data:", error);
-    }
-  };
-
   const refreshUserData = async () => {
     if (session?.user.id) {
-      await fetchUserData(session.user.id);
+      const userData = await fetchUserData(session.user.id);
+      setUser(userData.user);
+      setUserDocuments(userData.userDocuments);
     }
   };
 
@@ -281,12 +251,4 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
-}
-
-export function useAuth() {
-  const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error("useAuth must be used within an AuthProvider");
-  }
-  return context;
 }

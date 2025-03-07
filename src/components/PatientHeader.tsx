@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { UserRound } from "lucide-react";
 import { PatientProfileDialog } from "@/components/PatientProfileDialog";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/contexts/auth";
 
 export const PatientHeader = () => {
   const { user } = useAuth();
