@@ -64,9 +64,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const refreshUserData = async () => {
     if (session?.user.id) {
-      const userData = await fetchUserData(session.user.id);
-      setUser(userData.user);
-      setUserDocuments(userData.userDocuments);
+      try {
+        console.log("Refreshing user data for ID:", session.user.id);
+        const userData = await fetchUserData(session.user.id);
+        console.log("Refreshed user data:", userData);
+        setUser(userData.user);
+        setUserDocuments(userData.userDocuments);
+      } catch (error) {
+        console.error("Error refreshing user data:", error);
+      }
     }
   };
 
@@ -163,11 +169,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signOut = async () => {
     try {
+      console.log("Signing out...");
       setLoading(true);
       await supabase.auth.signOut();
+      console.log("Signed out successfully");
       navigate("/auth");
       toast.success("Вы вышли из системы");
     } catch (error: any) {
+      console.error("Error signing out:", error);
       toast.error(error.message || "Ошибка выхода");
     } finally {
       setLoading(false);
@@ -177,6 +186,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const updateProfile = async (profile: Partial<UserProfile>) => {
     try {
       if (!user?.id) throw new Error("Пользователь не найден");
+      console.log("Updating profile for user ID:", user.id, "with data:", profile);
 
       const updates = {
         ...profile,
@@ -184,15 +194,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         updated_at: new Date().toISOString(),
       };
 
-      const { error } = await supabase
+      const { error, data } = await supabase
         .from("profiles")
         .update(updates)
-        .eq("id", user.id);
+        .eq("id", user.id)
+        .select();
+
+      console.log("Profile update response:", data, error);
 
       if (error) throw error;
       await refreshUserData();
       toast.success("Профиль обновлен");
     } catch (error: any) {
+      console.error("Error updating profile:", error);
       toast.error(error.message || "Ошибка обновления профиля");
       throw error;
     }
@@ -201,6 +215,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const updateDocuments = async (documents: Partial<UserDocuments>) => {
     try {
       if (!user?.id) throw new Error("Пользователь не найден");
+      console.log("Updating documents for user ID:", user.id, "documents:", documents, "existing:", userDocuments);
 
       if (userDocuments?.id) {
         const updates = {
@@ -208,10 +223,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           updated_at: new Date().toISOString(),
         };
 
-        const { error } = await supabase
+        const { error, data } = await supabase
           .from("documents")
           .update(updates)
-          .eq("id", userDocuments.id);
+          .eq("id", userDocuments.id)
+          .select();
+
+        console.log("Documents update response:", data, error);
 
         if (error) throw error;
       } else {
@@ -220,9 +238,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           user_id: user.id,
         };
 
-        const { error } = await supabase
+        const { error, data } = await supabase
           .from("documents")
-          .insert(newDocument);
+          .insert(newDocument)
+          .select();
+
+        console.log("Documents insert response:", data, error);
 
         if (error) throw error;
       }
@@ -230,6 +251,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       await refreshUserData();
       toast.success("Документы обновлены");
     } catch (error: any) {
+      console.error("Error updating documents:", error);
       toast.error(error.message || "Ошибка обновления документов");
       throw error;
     }

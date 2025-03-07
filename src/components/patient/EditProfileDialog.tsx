@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from "react";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -40,6 +40,7 @@ export const EditProfileDialog = ({ open, onOpenChange }: EditProfileDialogProps
   // Set initial values when user or userDocuments change
   useEffect(() => {
     if (user) {
+      console.log("Setting initial profile values:", user);
       setFullName(user.full_name || "");
       setBirthDate(user.birth_date || "");
       setGender(user.gender || "");
@@ -50,6 +51,7 @@ export const EditProfileDialog = ({ open, onOpenChange }: EditProfileDialogProps
     }
     
     if (userDocuments) {
+      console.log("Setting initial document values:", userDocuments);
       setPassportSeries(userDocuments.passport_series || "");
       setPassportNumber(userDocuments.passport_number || "");
       setPassportIssuedBy(userDocuments.passport_issued_by || "");
@@ -63,6 +65,15 @@ export const EditProfileDialog = ({ open, onOpenChange }: EditProfileDialogProps
     if (!user) return;
     
     try {
+      console.log("Saving profile with data:", {
+        full_name: fullName,
+        birth_date: birthDate,
+        gender,
+        photo,
+        card_number: cardNumber,
+        attachment_date: attachmentDate,
+        clinic
+      });
       setSavingProfile(true);
       await updateProfile({
         full_name: fullName,
@@ -85,6 +96,14 @@ export const EditProfileDialog = ({ open, onOpenChange }: EditProfileDialogProps
     if (!user) return;
     
     try {
+      console.log("Saving documents with data:", {
+        passport_series: passportSeries,
+        passport_number: passportNumber,
+        passport_issued_by: passportIssuedBy,
+        passport_issued_date: passportIssuedDate,
+        snils,
+        inn
+      });
       setSavingDocuments(true);
       await updateDocuments({
         passport_series: passportSeries,
@@ -105,7 +124,7 @@ export const EditProfileDialog = ({ open, onOpenChange }: EditProfileDialogProps
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md">
-        <h2 className="text-xl font-semibold mb-4">Редактирование профиля</h2>
+        <DialogTitle className="text-xl font-semibold mb-4">Редактирование профиля</DialogTitle>
         
         <Tabs defaultValue="personal">
           <TabsList className="grid grid-cols-2 w-full mb-4">
