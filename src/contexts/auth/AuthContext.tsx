@@ -1,4 +1,3 @@
-
 import { createContext, useState, useEffect, ReactNode } from "react";
 import { supabase, getAuthRedirectOptions } from "@/integrations/supabase/client";
 import { Session } from "@supabase/supabase-js";
@@ -171,7 +170,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       console.log("Signing out...");
       setLoading(true);
-      await supabase.auth.signOut();
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
+      
+      setSession(null);
+      setUser(null);
+      setUserDocuments(null);
+      setIsEmailVerified(false);
+      
       console.log("Signed out successfully");
       navigate("/auth");
       toast.success("Вы вышли из системы");
@@ -203,6 +209,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       console.log("Profile update response:", data, error);
 
       if (error) throw error;
+      
+      if (data && data.length > 0) {
+        setUser(prev => prev ? { ...prev, ...profile } : null);
+      }
+      
       await refreshUserData();
       toast.success("Профиль обновлен");
     } catch (error: any) {
