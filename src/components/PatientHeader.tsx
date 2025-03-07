@@ -1,6 +1,5 @@
-
 import { useState, useEffect } from "react";
-import { Thermometer, UserRound } from "lucide-react";
+import { UserRound } from "lucide-react";
 import { PatientProfileDialog } from "@/components/PatientProfileDialog";
 import { useAuth } from "@/contexts/AuthContext";
 

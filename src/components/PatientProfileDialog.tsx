@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { PersonalInfoCard } from "./patient/PersonalInfoCard";
@@ -21,7 +20,6 @@ export function PatientProfileDialog({ open, onOpenChange }: PatientProfileDialo
   const { user, userDocuments, signOut } = useAuth();
   const [editProfileOpen, setEditProfileOpen] = useState(false);
 
-  // Mock data for visits, tests, and services (these would come from API in a real app)
   const recentVisits = [
     { date: "02.03.2024", doctor: "Иванов И.И. - Терапевт", type: "Плановый осмотр" },
     { date: "04.03.2024", doctor: "Петрова А.С. - Кардиолог", type: "Консультация" }
@@ -37,7 +35,6 @@ export function PatientProfileDialog({ open, onOpenChange }: PatientProfileDialo
     { date: "05.03.2024", service: "УЗИ щитовидной железы", cost: "3200 ₽" }
   ];
 
-  // Convert user and userDocuments to the format expected by the components
   const patientData: PatientData = {
     personalInfo: {
       fullName: user?.full_name || "",
@@ -83,7 +80,6 @@ export function PatientProfileDialog({ open, onOpenChange }: PatientProfileDialo
           </div>
           
           <div className="flex-1 overflow-y-auto p-4 space-y-4">
-            {/* Buttons moved above personal info card */}
             <div className="flex justify-end gap-2 mb-2">
               <Button 
                 variant="outline" 
@@ -102,22 +98,17 @@ export function PatientProfileDialog({ open, onOpenChange }: PatientProfileDialo
               </Button>
             </div>
 
-            {/* Personal Information */}
             <PersonalInfoCard 
               personalInfo={patientData.personalInfo} 
               medicalInfo={patientData.medicalInfo} 
             />
 
-            {/* Document Information */}
             <DocumentsCard documents={patientData.documents} />
 
-            {/* Recent Doctor Visits */}
             <VisitsCard visits={patientData.recentVisits} />
 
-            {/* Recent Tests */}
             <TestsCard tests={patientData.recentTests} />
 
-            {/* Paid Services */}
             <PaidServicesCard services={patientData.paidServices} />
           </div>
         </DialogContent>
