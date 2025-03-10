@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -96,23 +95,18 @@ export const EditProfileDialog = ({ open, onOpenChange }: EditProfileDialogProps
     if (!user) return;
     
     try {
-      console.log("Saving documents with data:", {
+      const documentData = {
         passport_series: passportSeries,
         passport_number: passportNumber,
         passport_issued_by: passportIssuedBy,
         passport_issued_date: passportIssuedDate,
         snils,
         inn
-      });
+      };
+      
+      console.log("Saving documents with data:", documentData);
       setSavingDocuments(true);
-      await updateDocuments({
-        passport_series: passportSeries,
-        passport_number: passportNumber,
-        passport_issued_by: passportIssuedBy,
-        passport_issued_date: passportIssuedDate,
-        snils,
-        inn
-      });
+      await updateDocuments(documentData);
       onOpenChange(false);
     } catch (error) {
       console.error("Error saving documents:", error);

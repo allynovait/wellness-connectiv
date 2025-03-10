@@ -228,35 +228,46 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (!user?.id) throw new Error("Пользователь не найден");
       console.log("Updating documents for user ID:", user.id, "documents:", documents, "existing:", userDocuments);
 
+      let response;
+      
       if (userDocuments?.id) {
+        console.log("Updating existing documents with ID:", userDocuments.id);
         const updates = {
           ...documents,
           updated_at: new Date().toISOString(),
         };
 
-        const { error, data } = await supabase
+        response = await supabase
           .from("documents")
           .update(updates)
           .eq("id", userDocuments.id)
           .select();
-
-        console.log("Documents update response:", data, error);
-
-        if (error) throw error;
+          
+        console.log("Documents update response:", response);
       } else {
+        console.log("Creating new documents record for user ID:", user.id);
         const newDocument = {
           ...documents,
           user_id: user.id,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
         };
 
-        const { error, data } = await supabase
+        response = await supabase
           .from("documents")
           .insert(newDocument)
           .select();
+          
+        console.log("Documents insert response:", response);
+      }
 
-        console.log("Documents insert response:", data, error);
+      if (response.error) {
+        console.error("Error in Supabase operation:", response.error);
+        throw response.error;
+      }
 
-        if (error) throw error;
+      if (response.data && response.data.length > 0) {
+        setUserDocuments(prev => prev ? { ...prev, ...documents } : response.data[0]);
       }
 
       await refreshUserData();
