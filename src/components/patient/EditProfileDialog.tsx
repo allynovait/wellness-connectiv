@@ -16,16 +16,14 @@ export const EditProfileDialog = ({ open, onOpenChange }: EditProfileDialogProps
   const { user, userDocuments, updateProfile, updateDocuments, refreshUserData } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   
-  // Reload user data when dialog opens
+  // Reload user data when dialog opens, but don't change the existing session
   useEffect(() => {
     const loadData = async () => {
-      if (open) {
+      if (open && user?.id) {
         console.log("Dialog opened, refreshing user data");
         setIsLoading(true);
         try {
           await refreshUserData();
-          console.log("User data refreshed:", user);
-          console.log("Document data refreshed:", userDocuments);
         } catch (error) {
           console.error("Error refreshing user data:", error);
         } finally {
@@ -34,11 +32,13 @@ export const EditProfileDialog = ({ open, onOpenChange }: EditProfileDialogProps
       }
     };
     
-    loadData();
-  }, [open, refreshUserData]);
+    if (open) {
+      loadData();
+    }
+  }, [open, refreshUserData, user?.id]);
   
+  // Debug logging only
   useEffect(() => {
-    console.log("Dialog open state changed:", open);
     if (open) {
       console.log("Dialog opened, current user data:", user);
       console.log("Dialog opened, current document data:", userDocuments);
