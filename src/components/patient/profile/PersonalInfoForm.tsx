@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -24,11 +23,6 @@ export const PersonalInfoForm = ({ user, onSave, onSuccess }: PersonalInfoFormPr
   const [saving, setSaving] = useState(false);
 
   const handleSaveProfile = async () => {
-    if (!user) {
-      toast.error("Невозможно сохранить профиль: пользователь не найден");
-      return;
-    }
-    
     try {
       const profileData = {
         full_name: fullName,

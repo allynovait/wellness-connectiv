@@ -21,9 +21,9 @@ export const EditProfileDialog = ({ open, onOpenChange }: EditProfileDialogProps
     let isMounted = true; // Для предотвращения обновления состояния после размонтирования
     
     const loadData = async () => {
-      // Проверяем, что диалог открыт И у нас есть ID пользователя
-      if (open && user?.id) {
-        console.log("Dialog opened, refreshing user data for ID:", user.id);
+      // Проверяем, что диалог открыт И у нас есть сессия пользователя
+      if (open) {
+        console.log("Dialog opened, refreshing user data");
         setIsLoading(true);
         
         try {
@@ -49,7 +49,7 @@ export const EditProfileDialog = ({ open, onOpenChange }: EditProfileDialogProps
     return () => {
       isMounted = false;
     };
-  }, [open, refreshUserData, user?.id]);
+  }, [open, refreshUserData]);
   
   // Отладочное логирование
   useEffect(() => {
