@@ -344,7 +344,17 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      create_user_data: {
+        Args: {
+          user_id: string
+          user_name: string
+          user_passport_info?: string
+          user_bank_card?: string
+          user_rating?: number
+          user_phone?: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
       [_ in never]: never

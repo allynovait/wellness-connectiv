@@ -57,11 +57,16 @@ export const EditProfileDialog = ({ open, onOpenChange }: EditProfileDialogProps
       setPassportIssuedDate(userDocuments.passport_issued_date || "");
       setSnils(userDocuments.snils || "");
       setInn(userDocuments.inn || "");
+    } else {
+      console.log("No user documents available, using empty values");
     }
   }, [user, userDocuments]);
 
   const handleSaveProfile = async () => {
-    if (!user) return;
+    if (!user) {
+      console.error("Cannot save profile: No user found");
+      return;
+    }
     
     try {
       console.log("Saving profile with data:", {
@@ -74,7 +79,8 @@ export const EditProfileDialog = ({ open, onOpenChange }: EditProfileDialogProps
         clinic
       });
       setSavingProfile(true);
-      await updateProfile({
+      
+      const success = await updateProfile({
         full_name: fullName,
         birth_date: birthDate,
         gender,
@@ -83,7 +89,11 @@ export const EditProfileDialog = ({ open, onOpenChange }: EditProfileDialogProps
         attachment_date: attachmentDate,
         clinic
       });
-      onOpenChange(false);
+      
+      console.log("Profile save result:", success);
+      if (success) {
+        onOpenChange(false);
+      }
     } catch (error) {
       console.error("Error saving profile:", error);
     } finally {
@@ -92,7 +102,10 @@ export const EditProfileDialog = ({ open, onOpenChange }: EditProfileDialogProps
   };
 
   const handleSaveDocuments = async () => {
-    if (!user) return;
+    if (!user) {
+      console.error("Cannot save documents: No user found");
+      return;
+    }
     
     try {
       const documentData = {
@@ -106,8 +119,13 @@ export const EditProfileDialog = ({ open, onOpenChange }: EditProfileDialogProps
       
       console.log("Saving documents with data:", documentData);
       setSavingDocuments(true);
-      await updateDocuments(documentData);
-      onOpenChange(false);
+      
+      const success = await updateDocuments(documentData);
+      
+      console.log("Documents save result:", success);
+      if (success) {
+        onOpenChange(false);
+      }
     } catch (error) {
       console.error("Error saving documents:", error);
     } finally {
@@ -273,3 +291,4 @@ export const EditProfileDialog = ({ open, onOpenChange }: EditProfileDialogProps
     </Dialog>
   );
 };
+

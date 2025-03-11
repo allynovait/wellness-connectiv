@@ -1,3 +1,4 @@
+
 import { createContext, useState, useEffect, ReactNode } from "react";
 import { supabase, getAuthRedirectOptions } from "@/integrations/supabase/client";
 import { Session } from "@supabase/supabase-js";
@@ -69,8 +70,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         console.log("Refreshed user data:", userData);
         setUser(userData.user);
         setUserDocuments(userData.userDocuments);
+        return userData; // Return the data for chaining
       } catch (error) {
         console.error("Error refreshing user data:", error);
+        throw error;
       }
     }
   };
@@ -173,6 +176,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
       
+      // Clear all auth state
       setSession(null);
       setUser(null);
       setUserDocuments(null);
@@ -212,10 +216,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       
       if (data && data.length > 0) {
         setUser(prev => prev ? { ...prev, ...profile } : null);
+        console.log("Updated user state with new profile data");
       }
       
-      await refreshUserData();
+      const refreshedData = await refreshUserData();
+      console.log("Profile updated and data refreshed:", refreshedData);
       toast.success("Профиль обновлен");
+      return true;
     } catch (error: any) {
       console.error("Error updating profile:", error);
       toast.error(error.message || "Ошибка обновления профиля");
@@ -225,8 +232,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const updateDocuments = async (documents: Partial<UserDocuments>) => {
     try {
-      if (!user?.id) throw new Error("Пользователь не найден");
-      console.log("Updating documents for user ID:", user.id, "documents:", documents, "existing:", userDocuments);
+      if (!user?.id) {
+        console.error("Cannot update documents: User ID is missing");
+        toast.error("Пользователь не найден");
+        throw new Error("Пользователь не найден");
+      }
+
+      console.log("Updating documents for user ID:", user.id);
+      console.log("Document data:", documents);
+      console.log("Existing documents:", userDocuments);
 
       let response;
       
@@ -237,13 +251,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           updated_at: new Date().toISOString(),
         };
 
+        console.log("Sending update to Supabase with data:", updates);
         response = await supabase
           .from("documents")
           .update(updates)
           .eq("id", userDocuments.id)
           .select();
           
-        console.log("Documents update response:", response);
+        console.log("Documents update complete. Response:", response);
       } else {
         console.log("Creating new documents record for user ID:", user.id);
         const newDocument = {
@@ -253,25 +268,37 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           updated_at: new Date().toISOString(),
         };
 
+        console.log("Sending insert to Supabase with data:", newDocument);
         response = await supabase
           .from("documents")
           .insert(newDocument)
           .select();
           
-        console.log("Documents insert response:", response);
+        console.log("Documents insert complete. Response:", response);
       }
 
-      if (response.error) {
+      // Better error handling
+      if (response?.error) {
         console.error("Error in Supabase operation:", response.error);
+        toast.error("Ошибка сохранения: " + (response.error.message || "Неизвестная ошибка"));
         throw response.error;
       }
 
-      if (response.data && response.data.length > 0) {
-        setUserDocuments(prev => prev ? { ...prev, ...documents } : response.data[0]);
+      // Update local state immediately if we have data
+      if (response?.data && response.data.length > 0) {
+        console.log("Updating local documents state with:", response.data[0]);
+        setUserDocuments(response.data[0]);
+      } else {
+        console.warn("No data returned from documents operation");
       }
 
-      await refreshUserData();
+      // Refresh all user data to ensure consistency
+      console.log("Refreshing all user data after document update");
+      const refreshedData = await refreshUserData();
+      console.log("Documents updated and data refreshed:", refreshedData);
+      
       toast.success("Документы обновлены");
+      return true;
     } catch (error: any) {
       console.error("Error updating documents:", error);
       toast.error(error.message || "Ошибка обновления документов");
