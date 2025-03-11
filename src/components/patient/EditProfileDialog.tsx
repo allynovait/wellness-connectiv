@@ -291,4 +291,3 @@ export const EditProfileDialog = ({ open, onOpenChange }: EditProfileDialogProps
     </Dialog>
   );
 };
-
