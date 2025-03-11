@@ -18,7 +18,7 @@ type PatientProfileDialogProps = {
 };
 
 export function PatientProfileDialog({ open, onOpenChange }: PatientProfileDialogProps) {
-  const { user, userDocuments, signOut } = useAuth();
+  const { user, userDocuments, signOut, loading } = useAuth();
   const [editProfileOpen, setEditProfileOpen] = useState(false);
 
   const recentVisits = [
@@ -35,28 +35,29 @@ export function PatientProfileDialog({ open, onOpenChange }: PatientProfileDialo
     { date: "02.03.2024", service: "Консультация кардиолога", cost: "2500 ₽" },
     { date: "05.03.2024", service: "УЗИ щитовидной железы", cost: "3200 ₽" }
   ];
-
+  
+  // Создаем объект с данными пациента из загруженных данных
   const patientData: PatientData = {
     personalInfo: {
       fullName: user?.full_name || "",
-      birthDate: user?.birth_date || "Н/Д",
-      gender: user?.gender || "Н/Д",
+      birthDate: user?.birth_date || "Не указана",
+      gender: user?.gender || "Не указан",
       photo: user?.photo || "/placeholder.svg"
     },
     documents: {
       passport: {
-        series: userDocuments?.passport_series || "Н/Д",
-        number: userDocuments?.passport_number || "Н/Д",
-        issuedBy: userDocuments?.passport_issued_by || "Н/Д",
-        issuedDate: userDocuments?.passport_issued_date || "Н/Д"
+        series: userDocuments?.passport_series || "",
+        number: userDocuments?.passport_number || "",
+        issuedBy: userDocuments?.passport_issued_by || "",
+        issuedDate: userDocuments?.passport_issued_date || ""
       },
-      snils: userDocuments?.snils || "Н/Д",
-      inn: userDocuments?.inn || "Н/Д"
+      snils: userDocuments?.snils || "",
+      inn: userDocuments?.inn || ""
     },
     medicalInfo: {
-      cardNumber: user?.card_number || "Н/Д",
-      attachmentDate: user?.attachment_date || "Н/Д",
-      clinic: user?.clinic || "Н/Д"
+      cardNumber: user?.card_number || "",
+      attachmentDate: user?.attachment_date || "Не указана",
+      clinic: user?.clinic || "Не указана"
     },
     recentVisits,
     recentTests,
@@ -80,38 +81,44 @@ export function PatientProfileDialog({ open, onOpenChange }: PatientProfileDialo
             <DialogTitle className="text-xl font-medium text-white">Профиль пациента</DialogTitle>
           </div>
           
-          <div className="flex-1 overflow-y-auto p-4 space-y-4">
-            <div className="flex justify-end gap-2 mb-2">
-              <Button 
-                variant="outline" 
-                size="sm" 
-                className="border-clinic-primary text-clinic-primary hover:bg-clinic-primary hover:text-white"
-                onClick={handleEdit}
-              >
-                <Pencil className="h-4 w-4 mr-1" /> Редактировать
-              </Button>
-              <Button 
-                variant="destructive" 
-                size="sm" 
-                onClick={handleLogout}
-              >
-                <LogOut className="h-4 w-4 mr-1" /> Выйти
-              </Button>
+          {loading ? (
+            <div className="flex-1 flex items-center justify-center p-4">
+              <p>Загрузка данных...</p>
             </div>
+          ) : (
+            <div className="flex-1 overflow-y-auto p-4 space-y-4">
+              <div className="flex justify-end gap-2 mb-2">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="border-clinic-primary text-clinic-primary hover:bg-clinic-primary hover:text-white"
+                  onClick={handleEdit}
+                >
+                  <Pencil className="h-4 w-4 mr-1" /> Редактировать
+                </Button>
+                <Button 
+                  variant="destructive" 
+                  size="sm" 
+                  onClick={handleLogout}
+                >
+                  <LogOut className="h-4 w-4 mr-1" /> Выйти
+                </Button>
+              </div>
 
-            <PersonalInfoCard 
-              personalInfo={patientData.personalInfo} 
-              medicalInfo={patientData.medicalInfo} 
-            />
+              <PersonalInfoCard 
+                personalInfo={patientData.personalInfo} 
+                medicalInfo={patientData.medicalInfo} 
+              />
 
-            <DocumentsCard documents={patientData.documents} />
+              <DocumentsCard documents={patientData.documents} />
 
-            <VisitsCard visits={patientData.recentVisits} />
+              <VisitsCard visits={patientData.recentVisits} />
 
-            <TestsCard tests={patientData.recentTests} />
+              <TestsCard tests={patientData.recentTests} />
 
-            <PaidServicesCard services={patientData.paidServices} />
-          </div>
+              <PaidServicesCard services={patientData.paidServices} />
+            </div>
+          )}
         </DialogContent>
       </Dialog>
 

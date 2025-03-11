@@ -1,10 +1,11 @@
+
 import { useState, useEffect } from "react";
 import { UserRound } from "lucide-react";
 import { PatientProfileDialog } from "@/components/PatientProfileDialog";
 import { useAuth } from "@/contexts/auth";
 
 export const PatientHeader = () => {
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
   const [weather, setWeather] = useState<{
     temp: number | null;
     loading: boolean;
@@ -45,7 +46,7 @@ export const PatientHeader = () => {
         <img src="/lovable-uploads/d200c670-f916-4464-8195-3b9de974c5cd.png" alt="Гиппократ" className="h-8 w-auto object-contain mix-blend-multiply" />
         <div className="flex justify-between items-center w-full">
           <h1 className="text-clinic-dark font-thin text-xs mx-[54px]">
-            Нижневартовск
+            {user?.clinic || "Нижневартовск"}
           </h1>
           <div className="flex items-center gap-2 text-clinic-primary">
             {weather.loading ? <span className="text-sm">-15°C</span> : weather.temp !== null ? <span className="text-sm font-medium">{weather.temp}°C</span> : <span className="text-sm">--°C</span>}
@@ -57,11 +58,15 @@ export const PatientHeader = () => {
           className="w-8 h-8 rounded-full bg-clinic-light flex items-center justify-center text-clinic-primary font-semibold cursor-pointer"
           onClick={() => setProfileOpen(true)}
         >
-          <UserRound className="w-5 h-5" />
+          {user?.photo ? (
+            <img src={user.photo} alt="Фото" className="w-full h-full rounded-full object-cover" />
+          ) : (
+            <UserRound className="w-5 h-5" />
+          )}
         </div>
         <div>
-          <p className="font-medium text-clinic-dark">{user?.full_name || 'Загрузка...'}</p>
-          <p className="text-sm text-gray-500">Карта пациента #{user?.card_number || '...'}</p>
+          <p className="font-medium text-clinic-dark">{loading ? 'Загрузка...' : (user?.full_name || 'Гость')}</p>
+          <p className="text-sm text-gray-500">Карта пациента {loading ? '...' : (user?.card_number ? `#${user.card_number}` : 'Не указана')}</p>
         </div>
       </div>
 

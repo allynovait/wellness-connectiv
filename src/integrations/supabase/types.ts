@@ -205,6 +205,86 @@ export type Database = {
         }
         Relationships: []
       }
+      training_exercises: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          reps: string
+          session_id: string
+          sets: number
+          updated_at: string
+          weight: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          reps: string
+          session_id: string
+          sets: number
+          updated_at?: string
+          weight?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          reps?: string
+          session_id?: string
+          sets?: number
+          updated_at?: string
+          weight?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "training_exercises_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "training_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      training_sessions: {
+        Row: {
+          client_id: string | null
+          created_at: string
+          end_time: string
+          id: string
+          notes: string | null
+          start_time: string
+          status: string
+          title: string
+          trainer_id: string
+          updated_at: string
+        }
+        Insert: {
+          client_id?: string | null
+          created_at?: string
+          end_time: string
+          id?: string
+          notes?: string | null
+          start_time: string
+          status?: string
+          title: string
+          trainer_id: string
+          updated_at?: string
+        }
+        Update: {
+          client_id?: string | null
+          created_at?: string
+          end_time?: string
+          id?: string
+          notes?: string | null
+          start_time?: string
+          status?: string
+          title?: string
+          trainer_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       user_data: {
         Row: {
           bank_card: string | null
@@ -244,6 +324,7 @@ export type Database = {
           email: string
           id: string
           name: string
+          phone: string | null
           role: string
           updated_at: string
         }
@@ -252,6 +333,7 @@ export type Database = {
           email: string
           id: string
           name: string
+          phone?: string | null
           role: string
           updated_at?: string
         }
@@ -260,6 +342,7 @@ export type Database = {
           email?: string
           id?: string
           name?: string
+          phone?: string | null
           role?: string
           updated_at?: string
         }

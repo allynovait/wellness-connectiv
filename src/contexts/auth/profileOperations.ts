@@ -10,7 +10,12 @@ export const updateProfile = async (
   refreshUserData: () => Promise<{ user: UserProfile | null; userDocuments: UserDocuments | null }>
 ): Promise<boolean> => {
   try {
-    if (!user?.id) throw new Error("Пользователь не найден");
+    if (!user?.id) {
+      console.error("Cannot update profile: User ID is missing");
+      toast.error("Пользователь не найден");
+      throw new Error("Пользователь не найден");
+    }
+    
     console.log("Updating profile for user ID:", user.id, "with data:", profile);
 
     const updates = {
@@ -27,7 +32,10 @@ export const updateProfile = async (
 
     console.log("Profile update response:", data, error);
 
-    if (error) throw error;
+    if (error) {
+      console.error("Supabase error updating profile:", error);
+      throw error;
+    }
     
     const refreshedData = await refreshUserData();
     console.log("Profile updated and data refreshed:", refreshedData);
@@ -36,7 +44,7 @@ export const updateProfile = async (
   } catch (error: any) {
     console.error("Error updating profile:", error);
     toast.error(error.message || "Ошибка обновления профиля");
-    throw error;
+    return false;
   }
 };
 
@@ -92,14 +100,14 @@ export const updateDocuments = async (
       console.log("Documents insert complete. Response:", response);
     }
 
-    // Better error handling
+    // Улучшенная обработка ошибок
     if (response?.error) {
       console.error("Error in Supabase operation:", response.error);
       toast.error("Ошибка сохранения: " + (response.error.message || "Неизвестная ошибка"));
       throw response.error;
     }
 
-    // Refresh all user data to ensure consistency
+    // Обновляем все данные пользователя для обеспечения консистентности
     console.log("Refreshing all user data after document update");
     const refreshedData = await refreshUserData();
     console.log("Documents updated and data refreshed:", refreshedData);
@@ -109,6 +117,6 @@ export const updateDocuments = async (
   } catch (error: any) {
     console.error("Error updating documents:", error);
     toast.error(error.message || "Ошибка обновления документов");
-    throw error;
+    return false;
   }
 };

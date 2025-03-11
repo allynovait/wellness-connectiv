@@ -16,6 +16,7 @@ import {
   updateProfile as updateUserProfile,
   updateDocuments as updateUserDocuments
 } from "./profileOperations";
+import { toast } from "sonner";
 
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
@@ -28,26 +29,40 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const navigate = useNavigate();
 
   useEffect(() => {
+    console.log("Initializing auth state listener");
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         console.log("Auth state changed:", event, session?.user?.email);
         setSession(session);
         
         if (session) {
+          console.log("User is authenticated, email confirmed at:", session.user?.email_confirmed_at);
           setIsEmailVerified(session.user?.email_confirmed_at != null);
-          const userData = await fetchUserData(session.user.id);
-          setUser(userData.user);
-          setUserDocuments(userData.userDocuments);
+          
+          try {
+            console.log("Fetching user data after auth state change");
+            setLoading(true);
+            const userData = await fetchUserData(session.user.id);
+            setUser(userData.user);
+            setUserDocuments(userData.userDocuments);
+          } catch (error) {
+            console.error("Error fetching user data after auth state change:", error);
+            toast.error("Ошибка загрузки данных пользователя");
+          } finally {
+            setLoading(false);
+          }
         } else {
+          console.log("User is not authenticated");
           setUser(null);
           setUserDocuments(null);
           setIsEmailVerified(false);
+          setLoading(false);
         }
-        setLoading(false);
       }
     );
 
     const initSession = async () => {
+      console.log("Initializing session");
       setLoading(true);
       try {
         const { data: { session } } = await supabase.auth.getSession();
@@ -56,25 +71,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         
         if (session) {
           setIsEmailVerified(session.user?.email_confirmed_at != null);
+          console.log("Fetching initial user data for ID:", session.user.id);
           const userData = await fetchUserData(session.user.id);
+          console.log("Initial user data:", userData);
           setUser(userData.user);
           setUserDocuments(userData.userDocuments);
         }
       } catch (error) {
-        console.error("Error getting session:", error);
+        console.error("Error getting initial session:", error);
+        toast.error("Ошибка инициализации сессии");
       } finally {
         setLoading(false);
       }
     };
 
     initSession();
-    return () => subscription.unsubscribe();
+    return () => {
+      console.log("Cleaning up auth state listener");
+      subscription.unsubscribe();
+    };
   }, []);
 
   const refreshUserData = async () => {
     if (session?.user.id) {
       try {
         console.log("Refreshing user data for ID:", session.user.id);
+        setLoading(true);
         const userData = await fetchUserData(session.user.id);
         console.log("Refreshed user data:", userData);
         setUser(userData.user);
@@ -82,7 +104,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return userData; // Return the data for chaining
       } catch (error) {
         console.error("Error refreshing user data:", error);
+        toast.error("Ошибка обновления данных пользователя");
         throw error;
+      } finally {
+        setLoading(false);
       }
     }
     return { user: null, userDocuments: null };

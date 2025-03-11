@@ -7,21 +7,33 @@ export const fetchUserData = async (userId: string): Promise<{
   userDocuments: UserDocuments | null;
 }> => {
   try {
+    console.log("Fetching user profile data for ID:", userId);
     const { data: profileData, error: profileError } = await supabase
       .from("profiles")
       .select("*")
       .eq("id", userId)
       .maybeSingle();
 
-    if (profileError) throw profileError;
+    if (profileError) {
+      console.error("Error fetching profile data:", profileError);
+      throw profileError;
+    }
     
+    console.log("Fetched profile data:", profileData);
+    
+    console.log("Fetching user documents data for ID:", userId);
     const { data: docsData, error: docsError } = await supabase
       .from("documents")
       .select("*")
       .eq("user_id", userId)
       .maybeSingle();
 
-    if (docsError && docsError.code !== "PGRST116") throw docsError;
+    if (docsError && docsError.code !== "PGRST116") {
+      console.error("Error fetching documents data:", docsError);
+      throw docsError;
+    }
+    
+    console.log("Fetched documents data:", docsData);
     
     return {
       user: profileData as UserProfile || null,

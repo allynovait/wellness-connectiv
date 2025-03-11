@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -6,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/auth";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { toast } from "sonner";
 
 type EditProfileDialogProps = {
   open: boolean;
@@ -47,6 +49,8 @@ export const EditProfileDialog = ({ open, onOpenChange }: EditProfileDialogProps
       setCardNumber(user.card_number || "");
       setAttachmentDate(user.attachment_date || "");
       setClinic(user.clinic || "");
+    } else {
+      console.log("No user available, using empty values for profile");
     }
     
     if (userDocuments) {
@@ -60,16 +64,16 @@ export const EditProfileDialog = ({ open, onOpenChange }: EditProfileDialogProps
     } else {
       console.log("No user documents available, using empty values");
     }
-  }, [user, userDocuments]);
+  }, [user, userDocuments, open]);
 
   const handleSaveProfile = async () => {
     if (!user) {
-      console.error("Cannot save profile: No user found");
+      toast.error("Невозможно сохранить профиль: пользователь не найден");
       return;
     }
     
     try {
-      console.log("Saving profile with data:", {
+      const profileData = {
         full_name: fullName,
         birth_date: birthDate,
         gender,
@@ -77,25 +81,21 @@ export const EditProfileDialog = ({ open, onOpenChange }: EditProfileDialogProps
         card_number: cardNumber,
         attachment_date: attachmentDate,
         clinic
-      });
+      };
+      
+      console.log("Сохранение профиля с данными:", profileData);
       setSavingProfile(true);
       
-      const success = await updateProfile({
-        full_name: fullName,
-        birth_date: birthDate,
-        gender,
-        photo,
-        card_number: cardNumber,
-        attachment_date: attachmentDate,
-        clinic
-      });
+      const success = await updateProfile(profileData);
       
-      console.log("Profile save result:", success);
+      console.log("Результат сохранения профиля:", success);
       if (success) {
+        toast.success("Профиль успешно обновлен");
         onOpenChange(false);
       }
-    } catch (error) {
-      console.error("Error saving profile:", error);
+    } catch (error: any) {
+      console.error("Ошибка при сохранении профиля:", error);
+      toast.error(`Ошибка при сохранении профиля: ${error.message || "Неизвестная ошибка"}`);
     } finally {
       setSavingProfile(false);
     }
@@ -103,7 +103,7 @@ export const EditProfileDialog = ({ open, onOpenChange }: EditProfileDialogProps
 
   const handleSaveDocuments = async () => {
     if (!user) {
-      console.error("Cannot save documents: No user found");
+      toast.error("Невозможно сохранить документы: пользователь не найден");
       return;
     }
     
@@ -117,17 +117,19 @@ export const EditProfileDialog = ({ open, onOpenChange }: EditProfileDialogProps
         inn
       };
       
-      console.log("Saving documents with data:", documentData);
+      console.log("Сохранение документов с данными:", documentData);
       setSavingDocuments(true);
       
       const success = await updateDocuments(documentData);
       
-      console.log("Documents save result:", success);
+      console.log("Результат сохранения документов:", success);
       if (success) {
+        toast.success("Документы успешно обновлены");
         onOpenChange(false);
       }
-    } catch (error) {
-      console.error("Error saving documents:", error);
+    } catch (error: any) {
+      console.error("Ошибка при сохранении документов:", error);
+      toast.error(`Ошибка при сохранении документов: ${error.message || "Неизвестная ошибка"}`);
     } finally {
       setSavingDocuments(false);
     }
@@ -176,6 +178,21 @@ export const EditProfileDialog = ({ open, onOpenChange }: EditProfileDialogProps
                   <SelectItem value="Женский">Женский</SelectItem>
                 </SelectContent>
               </Select>
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="photo">URL фотографии</Label>
+              <Input
+                id="photo"
+                value={photo}
+                onChange={(e) => setPhoto(e.target.value)}
+                placeholder="https://example.com/photo.jpg"
+              />
+              {photo && (
+                <div className="mt-2 flex justify-center">
+                  <img src={photo} alt="Предпросмотр" className="h-20 w-20 object-cover rounded-full" />
+                </div>
+              )}
             </div>
             
             <div className="space-y-2">

@@ -16,6 +16,12 @@ type DocumentsProps = {
 };
 
 export const DocumentsCard = ({ documents }: DocumentsProps) => {
+  // Проверяем наличие данных паспорта
+  const hasPassportData = documents.passport.series || 
+                          documents.passport.number || 
+                          documents.passport.issuedBy || 
+                          documents.passport.issuedDate;
+
   return (
     <Card>
       <CardContent className="p-5">
@@ -24,23 +30,43 @@ export const DocumentsCard = ({ documents }: DocumentsProps) => {
         <div className="space-y-3">
           <div>
             <p className="font-medium">Паспорт:</p>
-            <p className="text-gray-600">Серия {documents.passport.series} Номер {documents.passport.number}</p>
-            <p className="text-gray-600">Выдан: {documents.passport.issuedBy}</p>
-            <p className="text-gray-600">Дата выдачи: {documents.passport.issuedDate}</p>
+            {hasPassportData ? (
+              <>
+                {documents.passport.series && documents.passport.number && (
+                  <p className="text-gray-600">Серия {documents.passport.series} Номер {documents.passport.number}</p>
+                )}
+                {documents.passport.issuedBy && (
+                  <p className="text-gray-600">Выдан: {documents.passport.issuedBy}</p>
+                )}
+                {documents.passport.issuedDate && (
+                  <p className="text-gray-600">Дата выдачи: {documents.passport.issuedDate}</p>
+                )}
+              </>
+            ) : (
+              <p className="text-gray-400 italic">Не указано</p>
+            )}
           </div>
           
           <Separator className="my-2" />
           
           <div>
             <p className="font-medium">СНИЛС:</p>
-            <p className="text-gray-600">{documents.snils}</p>
+            {documents.snils ? (
+              <p className="text-gray-600">{documents.snils}</p>
+            ) : (
+              <p className="text-gray-400 italic">Не указан</p>
+            )}
           </div>
           
           <Separator className="my-2" />
           
           <div>
             <p className="font-medium">ИНН:</p>
-            <p className="text-gray-600">{documents.inn}</p>
+            {documents.inn ? (
+              <p className="text-gray-600">{documents.inn}</p>
+            ) : (
+              <p className="text-gray-400 italic">Не указан</p>
+            )}
           </div>
         </div>
       </CardContent>
