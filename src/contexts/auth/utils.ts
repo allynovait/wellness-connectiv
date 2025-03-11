@@ -19,12 +19,17 @@ export const fetchUserData = async (userId: string): Promise<{
       .eq("id", userId)
       .maybeSingle();
 
-    if (profileError) {
+    if (profileError && profileError.code !== "PGRST116") {
       console.error("Error fetching profile data:", profileError);
       throw profileError;
     }
     
     console.log("Fetched profile data:", profileData);
+    
+    // If no profile is found, we don't throw an error since it will be created on first update
+    if (!profileData) {
+      console.log("No profile found for user ID:", userId);
+    }
     
     console.log("Fetching user documents data for ID:", userId);
     const { data: docsData, error: docsError } = await supabase

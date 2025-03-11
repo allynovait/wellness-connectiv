@@ -50,10 +50,13 @@ export const updateProfile = async (
     if (!existingProfile) {
       console.log("Profile not found, creating new one");
       // Профиль не существует, создаем новый
+      // Make sure full_name is provided, fallback to user email if missing
       const createData = {
         ...updates,
         id: userId,
         created_at: new Date().toISOString(),
+        // Ensure full_name is always provided as it's required by the database schema
+        full_name: profile.full_name || sessionData.session.user.email?.split('@')[0] || 'Новый пользователь',
         role: 'patient', // Устанавливаем роль по умолчанию
       };
       
