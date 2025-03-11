@@ -7,6 +7,11 @@ export const fetchUserData = async (userId: string): Promise<{
   userDocuments: UserDocuments | null;
 }> => {
   try {
+    if (!userId) {
+      console.error("Cannot fetch user data: User ID is missing");
+      return { user: null, userDocuments: null };
+    }
+    
     console.log("Fetching user profile data for ID:", userId);
     const { data: profileData, error: profileError } = await supabase
       .from("profiles")

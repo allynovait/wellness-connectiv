@@ -34,7 +34,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
     );
   }
   
-  // If loading takes too long, we'll try to proceed anyway
+  // If loading takes too long, we'll proceed with redirection if needed
   console.log("Auth state:", { loading, session, isEmailVerified, initialLoadComplete });
   
   // If we're returning from email verification, don't redirect immediately
@@ -43,15 +43,18 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
     return <>{children}</>;
   }
   
+  // Если нет сессии, перенаправляем на страницу авторизации
   if (!session) {
     console.log("No session, redirecting to /auth");
     return <Navigate to="/auth" replace />;
   }
   
+  // Если email не подтвержден, перенаправляем на страницу подтверждения
   if (!isEmailVerified) {
     console.log("Email not verified, redirecting to verification page");
     return <Navigate to="/auth?verification=pending" replace />;
   }
 
+  // Если все проверки пройдены, показываем защищенный контент
   return <>{children}</>;
 };

@@ -10,31 +10,74 @@ export const updateProfile = async (
   refreshUserData: () => Promise<{ user: UserProfile | null; userDocuments: UserDocuments | null }>
 ): Promise<boolean> => {
   try {
-    if (!user?.id) {
-      console.error("Cannot update profile: User ID is missing");
-      toast.error("Пользователь не найден");
-      throw new Error("Пользователь не найден");
+    // Проверяем наличие авторизованной сессии
+    const { data: sessionData } = await supabase.auth.getSession();
+    if (!sessionData.session) {
+      console.error("Cannot update profile: No active session");
+      toast.error("Вы не авторизованы");
+      throw new Error("Вы не авторизованы");
     }
     
-    console.log("Updating profile for user ID:", user.id, "with data:", profile);
+    const userId = sessionData.session.user.id;
+    console.log("Current session user ID:", userId);
+    
+    // Используем ID из сессии, даже если объект user не передан
+    if (!userId) {
+      console.error("Cannot update profile: User ID is missing in session");
+      toast.error("Ошибка идентификации пользователя");
+      throw new Error("Ошибка идентификации пользователя");
+    }
+    
+    console.log("Updating profile for user ID:", userId, "with data:", profile);
 
     const updates = {
       ...profile,
-      id: user.id,
+      id: userId,
       updated_at: new Date().toISOString(),
     };
 
-    const { error, data } = await supabase
+    // Сначала проверяем, существует ли профиль пользователя
+    const { data: existingProfile, error: checkError } = await supabase
       .from("profiles")
-      .update(updates)
-      .eq("id", user.id)
-      .select();
+      .select("id")
+      .eq("id", userId)
+      .maybeSingle();
+      
+    console.log("Profile check result:", existingProfile, checkError);
+    
+    let result;
+    
+    if (!existingProfile) {
+      console.log("Profile not found, creating new one");
+      // Профиль не существует, создаем новый
+      const createData = {
+        ...updates,
+        id: userId,
+        created_at: new Date().toISOString(),
+        role: 'patient', // Устанавливаем роль по умолчанию
+      };
+      
+      result = await supabase
+        .from("profiles")
+        .insert(createData)
+        .select();
+        
+      console.log("Profile creation result:", result);
+    } else {
+      console.log("Profile found, updating existing one");
+      // Профиль существует, обновляем
+      result = await supabase
+        .from("profiles")
+        .update(updates)
+        .eq("id", userId)
+        .select();
+        
+      console.log("Profile update result:", result);
+    }
 
-    console.log("Profile update response:", data, error);
-
-    if (error) {
-      console.error("Supabase error updating profile:", error);
-      throw error;
+    if (result.error) {
+      console.error("Supabase error updating profile:", result.error);
+      throw result.error;
     }
     
     const refreshedData = await refreshUserData();
@@ -55,13 +98,24 @@ export const updateDocuments = async (
   refreshUserData: () => Promise<{ user: UserProfile | null; userDocuments: UserDocuments | null }>
 ): Promise<boolean> => {
   try {
-    if (!user?.id) {
-      console.error("Cannot update documents: User ID is missing");
-      toast.error("Пользователь не найден");
-      throw new Error("Пользователь не найден");
+    // Проверяем наличие авторизованной сессии
+    const { data: sessionData } = await supabase.auth.getSession();
+    if (!sessionData.session) {
+      console.error("Cannot update documents: No active session");
+      toast.error("Вы не авторизованы");
+      throw new Error("Вы не авторизованы");
+    }
+    
+    const userId = sessionData.session.user.id;
+    console.log("Current session user ID for documents update:", userId);
+
+    if (!userId) {
+      console.error("Cannot update documents: User ID is missing in session");
+      toast.error("Ошибка идентификации пользователя");
+      throw new Error("Ошибка идентификации пользователя");
     }
 
-    console.log("Updating documents for user ID:", user.id);
+    console.log("Updating documents for user ID:", userId);
     console.log("Document data:", documents);
     console.log("Existing documents:", userDocuments);
 
@@ -83,10 +137,10 @@ export const updateDocuments = async (
         
       console.log("Documents update complete. Response:", response);
     } else {
-      console.log("Creating new documents record for user ID:", user.id);
+      console.log("Creating new documents record for user ID:", userId);
       const newDocument = {
         ...documents,
-        user_id: user.id,
+        user_id: userId,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       };
