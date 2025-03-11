@@ -16,18 +16,27 @@ export const EditProfileDialog = ({ open, onOpenChange }: EditProfileDialogProps
   const { user, userDocuments, updateProfile, updateDocuments, refreshUserData } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   
-  // Reload user data when dialog opens, but don't change the existing session
+  // Загружаем данные только когда диалог открывается и только если есть ID пользователя
   useEffect(() => {
+    let isMounted = true; // Для предотвращения обновления состояния после размонтирования
+    
     const loadData = async () => {
+      // Проверяем, что диалог открыт И у нас есть ID пользователя
       if (open && user?.id) {
-        console.log("Dialog opened, refreshing user data");
+        console.log("Dialog opened, refreshing user data for ID:", user.id);
         setIsLoading(true);
+        
         try {
-          await refreshUserData();
+          // Получаем данные, но НЕ обновляем состояние напрямую
+          const refreshedData = await refreshUserData();
+          console.log("Refreshed data successfully:", refreshedData);
         } catch (error) {
           console.error("Error refreshing user data:", error);
         } finally {
-          setIsLoading(false);
+          // Проверяем, что компонент всё ещё смонтирован
+          if (isMounted) {
+            setIsLoading(false);
+          }
         }
       }
     };
@@ -35,9 +44,14 @@ export const EditProfileDialog = ({ open, onOpenChange }: EditProfileDialogProps
     if (open) {
       loadData();
     }
+    
+    // Очистка при размонтировании компонента
+    return () => {
+      isMounted = false;
+    };
   }, [open, refreshUserData, user?.id]);
   
-  // Debug logging only
+  // Отладочное логирование
   useEffect(() => {
     if (open) {
       console.log("Dialog opened, current user data:", user);
