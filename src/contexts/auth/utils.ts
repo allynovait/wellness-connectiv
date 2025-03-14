@@ -19,17 +19,16 @@ export const fetchUserData = async (userId: string): Promise<{
       .eq("id", userId)
       .maybeSingle();
 
-    if (profileError && profileError.code !== "PGRST116") {
+    if (profileError) {
       console.error("Error fetching profile data:", profileError);
-      throw profileError;
+      if (profileError.code !== "PGRST116") { // Not PGRST116 (no rows returned)
+        throw profileError;
+      }
     }
     
     console.log("Fetched profile data:", profileData);
     
     // If no profile is found, we don't throw an error since it will be created on first update
-    if (!profileData) {
-      console.log("No profile found for user ID:", userId);
-    }
     
     console.log("Fetching user documents data for ID:", userId);
     const { data: docsData, error: docsError } = await supabase
@@ -38,9 +37,11 @@ export const fetchUserData = async (userId: string): Promise<{
       .eq("user_id", userId)
       .maybeSingle();
 
-    if (docsError && docsError.code !== "PGRST116") {
+    if (docsError) {
       console.error("Error fetching documents data:", docsError);
-      throw docsError;
+      if (docsError.code !== "PGRST116") { // Not PGRST116 (no rows returned)
+        throw docsError;
+      }
     }
     
     console.log("Fetched documents data:", docsData);
@@ -51,6 +52,6 @@ export const fetchUserData = async (userId: string): Promise<{
     };
   } catch (error) {
     console.error("Error fetching user data:", error);
-    return { user: null, userDocuments: null };
+    throw error;
   }
 };

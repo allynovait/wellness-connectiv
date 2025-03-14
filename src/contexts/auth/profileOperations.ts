@@ -1,7 +1,7 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { UserProfile, UserDocuments } from "@/types/auth";
 import { toast } from "sonner";
-import { fetchUserData } from "./utils";
 
 export const updateProfile = async (
   profile: Partial<UserProfile>,
@@ -10,21 +10,26 @@ export const updateProfile = async (
 ): Promise<boolean> => {
   try {
     // Проверяем наличие авторизованной сессии
-    const { data: sessionData } = await supabase.auth.getSession();
+    const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+    if (sessionError) {
+      console.error("Error getting session:", sessionError);
+      toast.error("Ошибка получения сессии");
+      return false;
+    }
+    
     if (!sessionData.session) {
       console.error("Cannot update profile: No active session");
       toast.error("Вы не авторизованы");
-      throw new Error("Вы не авторизованы");
+      return false;
     }
     
     const userId = sessionData.session.user.id;
     console.log("Current session user ID:", userId);
     
-    // Используем ID из сессии, даже если объект user не передан
     if (!userId) {
       console.error("Cannot update profile: User ID is missing in session");
       toast.error("Ошибка идентификации пользователя");
-      throw new Error("Ошибка идентификации пользователя");
+      return false;
     }
     
     console.log("Updating profile for user ID:", userId, "with data:", profile);
@@ -38,7 +43,7 @@ export const updateProfile = async (
     // Сначала проверяем, существует ли профиль пользователя
     const { data: existingProfile, error: checkError } = await supabase
       .from("profiles")
-      .select("id")
+      .select("id, full_name, role")
       .eq("id", userId)
       .maybeSingle();
       
@@ -49,12 +54,11 @@ export const updateProfile = async (
     if (!existingProfile) {
       console.log("Profile not found, creating new one");
       // Профиль не существует, создаем новый
-      // Make sure full_name is provided, fallback to user email if missing
       const createData = {
         ...updates,
         id: userId,
         created_at: new Date().toISOString(),
-        // Ensure full_name is always provided as it's required by the database schema
+        // Ensure full_name is always provided as it's required
         full_name: profile.full_name || sessionData.session.user.email?.split('@')[0] || 'Новый пользователь',
         role: 'patient', // Устанавливаем роль по умолчанию
       };
@@ -79,9 +83,11 @@ export const updateProfile = async (
 
     if (result.error) {
       console.error("Supabase error updating profile:", result.error);
-      throw result.error;
+      toast.error("Ошибка обновления профиля: " + result.error.message);
+      return false;
     }
     
+    // Обновляем данные пользователя
     const refreshedData = await refreshUserData();
     console.log("Profile updated and data refreshed:", refreshedData);
     toast.success("Профиль обновлен");
@@ -101,11 +107,17 @@ export const updateDocuments = async (
 ): Promise<boolean> => {
   try {
     // Проверяем наличие авторизованной сессии
-    const { data: sessionData } = await supabase.auth.getSession();
+    const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+    if (sessionError) {
+      console.error("Error getting session:", sessionError);
+      toast.error("Ошибка получения сессии");
+      return false;
+    }
+    
     if (!sessionData.session) {
       console.error("Cannot update documents: No active session");
       toast.error("Вы не авторизованы");
-      throw new Error("Вы не авторизованы");
+      return false;
     }
     
     const userId = sessionData.session.user.id;
@@ -114,7 +126,7 @@ export const updateDocuments = async (
     if (!userId) {
       console.error("Cannot update documents: User ID is missing in session");
       toast.error("Ошибка идентификации пользователя");
-      throw new Error("Ошибка идентификации пользователя");
+      return false;
     }
 
     console.log("Updating documents for user ID:", userId);
@@ -160,7 +172,7 @@ export const updateDocuments = async (
     if (response?.error) {
       console.error("Error in Supabase operation:", response.error);
       toast.error("Ошибка сохранения: " + (response.error.message || "Неизвестная ошибка"));
-      throw response.error;
+      return false;
     }
 
     // Обновляем все данные пользователя для обеспечения консистентности

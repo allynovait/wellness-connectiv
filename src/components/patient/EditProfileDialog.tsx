@@ -16,14 +16,14 @@ export const EditProfileDialog = ({ open, onOpenChange }: EditProfileDialogProps
   const { user, userDocuments, updateProfile, updateDocuments, refreshUserData } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   
-  // Загружаем данные только когда диалог открывается и только если есть ID пользователя
+  // Загружаем данные только когда диалог открывается
   useEffect(() => {
     let isMounted = true; // Для предотвращения обновления состояния после размонтирования
     
     const loadData = async () => {
-      // Проверяем, что диалог открыт И у нас есть сессия пользователя
+      // Проверяем, что диалог открыт
       if (open) {
-        console.log("Dialog opened, refreshing user data");
+        console.log("Dialog opened, attempting to refresh user data");
         setIsLoading(true);
         
         try {

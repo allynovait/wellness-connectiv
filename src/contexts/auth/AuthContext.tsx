@@ -33,7 +33,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         console.log("Auth state changed:", event, session?.user?.email);
-        setSession(session);
+        
+        // Do not set session to null if we're just refreshing token
+        if (event !== 'TOKEN_REFRESHED' || session) {
+          setSession(session);
+        }
         
         if (session) {
           console.log("User is authenticated, email confirmed at:", session.user?.email_confirmed_at);
@@ -51,8 +55,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           } finally {
             setLoading(false);
           }
-        } else {
-          console.log("User is not authenticated");
+        } else if (event === 'SIGNED_OUT') {
+          console.log("User is signed out");
           setUser(null);
           setUserDocuments(null);
           setIsEmailVerified(false);
@@ -65,7 +69,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       console.log("Initializing session");
       setLoading(true);
       try {
-        const { data: { session } } = await supabase.auth.getSession();
+        const { data: { session }, error } = await supabase.auth.getSession();
+        
+        if (error) {
+          console.error("Error getting initial session:", error);
+          throw error;
+        }
+        
         console.log("Initial session:", session?.user?.email);
         setSession(session);
         
@@ -93,24 +103,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const refreshUserData = async () => {
-    if (session?.user.id) {
-      try {
-        console.log("Refreshing user data for ID:", session.user.id);
-        setLoading(true);
-        const userData = await fetchUserData(session.user.id);
-        console.log("Refreshed user data:", userData);
-        setUser(userData.user);
-        setUserDocuments(userData.userDocuments);
-        return userData; // Return the data for chaining
-      } catch (error) {
-        console.error("Error refreshing user data:", error);
-        toast.error("Ошибка обновления данных пользователя");
-        throw error;
-      } finally {
-        setLoading(false);
-      }
+    if (!session?.user.id) {
+      console.log("Cannot refresh data: No active session");
+      return { user: null, userDocuments: null };
     }
-    return { user: null, userDocuments: null };
+    
+    try {
+      console.log("Refreshing user data for ID:", session.user.id);
+      setLoading(true);
+      const userData = await fetchUserData(session.user.id);
+      console.log("Refreshed user data:", userData);
+      setUser(userData.user);
+      setUserDocuments(userData.userDocuments);
+      return userData; // Return the data for chaining
+    } catch (error) {
+      console.error("Error refreshing user data:", error);
+      toast.error("Ошибка обновления данных пользователя");
+      return { user, userDocuments }; // Return current state on error
+    } finally {
+      setLoading(false);
+    }
   };
 
   const value: AuthContextType = {
