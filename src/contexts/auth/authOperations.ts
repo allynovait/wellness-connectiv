@@ -13,19 +13,28 @@ export const signIn = async (
 ) => {
   try {
     setLoading(true);
+    console.log("Attempting login with email:", email);
+    
     const { data, error } = await supabase.auth.signInWithPassword({ email, password });
     
-    if (error) throw error;
+    if (error) {
+      console.error("Login error:", error);
+      throw error;
+    }
+    
+    console.log("Login successful:", data);
     
     if (data.user && !data.user.email_confirmed_at) {
       setIsEmailVerified(false);
       toast.warning("Необходимо подтвердить email. Проверьте свою почту.");
     } else {
       setIsEmailVerified(true);
-      navigate("/");
       toast.success("Успешный вход");
+      // Give a small delay to allow the session to be set
+      setTimeout(() => navigate("/"), 300);
     }
   } catch (error: any) {
+    console.error("Login error caught:", error);
     if (error.message === "Email not confirmed") {
       toast.error("Необходимо подтвердить email. Проверьте свою почту.");
     } else {
@@ -123,21 +132,27 @@ export const signOut = async (
   try {
     console.log("Signing out...");
     setLoading(true);
-    const { error } = await supabase.auth.signOut();
-    if (error) throw error;
     
-    // Clear all auth state
+    // First clear UI state to prevent flashing
     setSession(null);
     setUser(null);
     setUserDocuments(null);
     setIsEmailVerified(false);
     
+    const { error } = await supabase.auth.signOut();
+    if (error) throw error;
+    
     console.log("Signed out successfully");
+    
+    // Forced navigation after sign out
     navigate("/auth");
     toast.success("Вы вышли из системы");
   } catch (error: any) {
     console.error("Error signing out:", error);
     toast.error(error.message || "Ошибка выхода");
+    
+    // Even on error, redirect to auth page for safety
+    navigate("/auth");
   } finally {
     setLoading(false);
   }

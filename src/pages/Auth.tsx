@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/auth";
 import { Card, CardContent } from "@/components/ui/card";
@@ -6,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Navigate, useLocation } from "react-router-dom";
+import { Navigate, useLocation, useNavigate } from "react-router-dom";
 import { UserRole } from "@/types/auth";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle, CheckCircle, RefreshCw } from "lucide-react";
@@ -15,6 +16,7 @@ const Auth = () => {
   const { signIn, signUp, session, loading, resendVerificationEmail, isEmailVerified } = useAuth();
   const [activeTab, setActiveTab] = useState<"login" | "register">("login");
   const location = useLocation();
+  const navigate = useNavigate();
   const queryParams = new URLSearchParams(location.search);
   const verificationStatus = queryParams.get('verification');
   const verified = queryParams.get('verified');
@@ -74,9 +76,13 @@ const Auth = () => {
     };
   }, [cooldownTime]);
 
-  if (session && !loading && isEmailVerified) {
-    return <Navigate to="/" replace />;
-  }
+  // Check if user is already logged in
+  useEffect(() => {
+    if (session && !loading && isEmailVerified) {
+      console.log("User is logged in, redirecting to home");
+      navigate("/");
+    }
+  }, [session, loading, isEmailVerified, navigate]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -84,10 +90,10 @@ const Auth = () => {
 
     try {
       setLoginLoading(true);
+      console.log("Login form submitted with email:", loginEmail);
       await signIn(loginEmail, loginPassword);
     } catch (error) {
-      console.error("Login error:", error);
-    } finally {
+      console.error("Login error in form:", error);
       setLoginLoading(false);
     }
   };
@@ -188,6 +194,12 @@ const Auth = () => {
     }
     return null;
   };
+
+  // Direct redirect if user is authenticated and verified
+  if (session && !loading && isEmailVerified) {
+    console.log("Redirecting to home from render");
+    return <Navigate to="/" replace />;
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-clinic-background p-4">

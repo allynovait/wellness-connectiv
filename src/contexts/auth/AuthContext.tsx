@@ -61,6 +61,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setUserDocuments(null);
           setIsEmailVerified(false);
           setLoading(false);
+          
+          // Ensure navigation to auth page on sign out
+          navigate("/auth");
         }
       }
     );
@@ -100,7 +103,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       console.log("Cleaning up auth state listener");
       subscription.unsubscribe();
     };
-  }, []);
+  }, [navigate]);
 
   const refreshUserData = async () => {
     // Get the current session to ensure we have the latest data
@@ -114,6 +117,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     
     if (!sessionData.session?.user.id) {
       console.log("Cannot refresh data: No active session");
+      toast.error("Нет активной сессии");
+      navigate("/auth"); // Redirect to auth page if no session
       return { user: null, userDocuments: null };
     }
     
