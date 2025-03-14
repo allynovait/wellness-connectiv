@@ -27,11 +27,15 @@ export const signIn = async (
     if (data.user && !data.user.email_confirmed_at) {
       setIsEmailVerified(false);
       toast.warning("Необходимо подтвердить email. Проверьте свою почту.");
+      return; // Exit early if email not verified
     } else {
       setIsEmailVerified(true);
       toast.success("Успешный вход");
-      // Give a small delay to allow the session to be set
-      setTimeout(() => navigate("/"), 300);
+      // Wait for the auth state to update with the session
+      setTimeout(() => {
+        console.log("Redirecting to home page");
+        navigate("/");
+      }, 800); // Giving more time for the auth state to update
     }
   } catch (error: any) {
     console.error("Login error caught:", error);
@@ -40,7 +44,6 @@ export const signIn = async (
     } else {
       toast.error(error.message || "Ошибка входа");
     }
-    throw error;
   } finally {
     setLoading(false);
   }
@@ -85,7 +88,6 @@ export const signUp = async (
   } catch (error: any) {
     console.error("Signup error:", error);
     toast.error(error.message || "Ошибка регистрации");
-    throw error;
   } finally {
     setLoading(false);
   }
@@ -115,7 +117,6 @@ export const resendVerificationEmail = async (
   } catch (error: any) {
     console.error("Resend verification error:", error);
     toast.error(error.message || "Ошибка отправки письма");
-    throw error;
   } finally {
     setLoading(false);
   }
@@ -144,7 +145,7 @@ export const signOut = async (
     
     console.log("Signed out successfully");
     
-    // Forced navigation after sign out
+    // Navigate to auth page and show success message
     navigate("/auth");
     toast.success("Вы вышли из системы");
   } catch (error: any) {

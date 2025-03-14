@@ -21,14 +21,10 @@ export const fetchUserData = async (userId: string): Promise<{
 
     if (profileError) {
       console.error("Error fetching profile data:", profileError);
-      if (profileError.code !== "PGRST116") { // Not PGRST116 (no rows returned)
-        throw profileError;
-      }
+      throw profileError;
     }
     
     console.log("Fetched profile data:", profileData);
-    
-    // If no profile is found, we don't throw an error since it will be created on first update
     
     console.log("Fetching user documents data for ID:", userId);
     const { data: docsData, error: docsError } = await supabase
@@ -39,9 +35,7 @@ export const fetchUserData = async (userId: string): Promise<{
 
     if (docsError) {
       console.error("Error fetching documents data:", docsError);
-      if (docsError.code !== "PGRST116") { // Not PGRST116 (no rows returned)
-        throw docsError;
-      }
+      throw docsError;
     }
     
     console.log("Fetched documents data:", docsData);

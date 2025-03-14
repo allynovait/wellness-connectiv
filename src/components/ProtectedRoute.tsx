@@ -19,7 +19,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   useEffect(() => {
     const timer = setTimeout(() => {
       setInitialLoadComplete(true);
-    }, 5000); // 5 seconds max loading time
+    }, 3000); // Reduced to 3 seconds max loading time
 
     return () => clearTimeout(timer);
   }, []);

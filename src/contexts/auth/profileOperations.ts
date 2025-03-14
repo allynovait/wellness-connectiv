@@ -60,7 +60,7 @@ export const updateProfile = async (
         created_at: new Date().toISOString(),
         // Ensure full_name is always provided as it's required
         full_name: profile.full_name || sessionData.session.user.email?.split('@')[0] || 'Новый пользователь',
-        role: 'patient', // Устанавливаем роль по умолчанию
+        role: profile.role || 'patient', // Устанавливаем роль по умолчанию
       };
       
       result = await supabase

@@ -6,6 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PersonalInfoForm } from "./profile/PersonalInfoForm";
 import { DocumentsForm } from "./profile/DocumentsForm";
 import { Loader2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 type EditProfileDialogProps = {
   open: boolean;
@@ -73,6 +74,18 @@ export const EditProfileDialog = ({ open, onOpenChange }: EditProfileDialogProps
     }
   };
 
+  const handleRetry = async () => {
+    setLoadingError(null);
+    setIsLoading(true);
+    try {
+      await refreshUserData();
+      setIsLoading(false);
+    } catch (error) {
+      setLoadingError("Не удалось загрузить данные. Попробуйте еще раз.");
+      setIsLoading(false);
+    }
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md">
@@ -86,12 +99,12 @@ export const EditProfileDialog = ({ open, onOpenChange }: EditProfileDialogProps
         ) : loadingError ? (
           <div className="text-center py-8 text-red-500">
             <p>{loadingError}</p>
-            <button 
-              onClick={() => refreshUserData()} 
+            <Button 
+              onClick={handleRetry} 
               className="mt-4 px-4 py-2 bg-clinic-primary text-white rounded hover:bg-clinic-primary/90"
             >
               Попробовать снова
-            </button>
+            </Button>
           </div>
         ) : (
           <Tabs defaultValue="personal">

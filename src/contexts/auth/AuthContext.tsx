@@ -118,7 +118,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!sessionData.session?.user.id) {
       console.log("Cannot refresh data: No active session");
       toast.error("Нет активной сессии");
-      navigate("/auth"); // Redirect to auth page if no session
+      // Redirect to auth page if no session
+      navigate("/auth");
       return { user: null, userDocuments: null };
     }
     
