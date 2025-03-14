@@ -46,6 +46,9 @@ export const fetchUserData = async (userId: string): Promise<{
     
     console.log("Fetched documents data:", docsData);
     
+    // Add a timeout to avoid immediate state changes
+    await new Promise(resolve => setTimeout(resolve, 300));
+    
     return {
       user: profileData as UserProfile || null,
       userDocuments: docsData as UserDocuments || null

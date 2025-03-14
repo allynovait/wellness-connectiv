@@ -15,6 +15,7 @@ type EditProfileDialogProps = {
 export const EditProfileDialog = ({ open, onOpenChange }: EditProfileDialogProps) => {
   const { user, userDocuments, updateProfile, updateDocuments, refreshUserData } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
+  const [loadingError, setLoadingError] = useState<string | null>(null);
   
   // Загружаем данные только когда диалог открывается
   useEffect(() => {
@@ -25,16 +26,23 @@ export const EditProfileDialog = ({ open, onOpenChange }: EditProfileDialogProps
       if (open) {
         console.log("Dialog opened, attempting to refresh user data");
         setIsLoading(true);
+        setLoadingError(null);
         
         try {
           // Получаем данные, но НЕ обновляем состояние напрямую
           const refreshedData = await refreshUserData();
           console.log("Refreshed data successfully:", refreshedData);
+          
+          // Устанавливаем 500мс таймаут, чтобы избежать слишком быстрой смены состояний
+          setTimeout(() => {
+            if (isMounted) {
+              setIsLoading(false);
+            }
+          }, 500);
         } catch (error) {
           console.error("Error refreshing user data:", error);
-        } finally {
-          // Проверяем, что компонент всё ещё смонтирован
           if (isMounted) {
+            setLoadingError("Ошибка загрузки данных профиля");
             setIsLoading(false);
           }
         }
@@ -74,6 +82,16 @@ export const EditProfileDialog = ({ open, onOpenChange }: EditProfileDialogProps
           <div className="flex justify-center items-center py-8">
             <Loader2 className="w-8 h-8 animate-spin text-clinic-primary" />
             <span className="ml-2">Загрузка данных...</span>
+          </div>
+        ) : loadingError ? (
+          <div className="text-center py-8 text-red-500">
+            <p>{loadingError}</p>
+            <button 
+              onClick={() => refreshUserData()} 
+              className="mt-4 px-4 py-2 bg-clinic-primary text-white rounded hover:bg-clinic-primary/90"
+            >
+              Попробовать снова
+            </button>
           </div>
         ) : (
           <Tabs defaultValue="personal">

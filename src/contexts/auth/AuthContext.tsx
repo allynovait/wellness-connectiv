@@ -103,15 +103,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const refreshUserData = async () => {
-    if (!session?.user.id) {
+    // Get the current session to ensure we have the latest data
+    const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+    
+    if (sessionError) {
+      console.error("Error getting session for refresh:", sessionError);
+      toast.error("Ошибка получения сессии");
+      return { user, userDocuments }; // Return current state on error
+    }
+    
+    if (!sessionData.session?.user.id) {
       console.log("Cannot refresh data: No active session");
       return { user: null, userDocuments: null };
     }
     
     try {
-      console.log("Refreshing user data for ID:", session.user.id);
+      console.log("Refreshing user data for ID:", sessionData.session.user.id);
       setLoading(true);
-      const userData = await fetchUserData(session.user.id);
+      const userData = await fetchUserData(sessionData.session.user.id);
       console.log("Refreshed user data:", userData);
       setUser(userData.user);
       setUserDocuments(userData.userDocuments);
