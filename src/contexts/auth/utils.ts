@@ -40,20 +40,8 @@ export async function fetchUserData(userId: string) {
       throw new Error("User profile not found");
     }
 
-    // Получаем данные документов пользователя
-    const { data: documentsData, error: documentsError } = await supabase
-      .from("documents")
-      .select("*")
-      .eq("user_id", userId)
-      .single();
-
-    if (documentsError && documentsError.code !== "PGRST116") {
-      console.error("Error fetching user documents:", documentsError);
-      throw documentsError;
-    }
-
-    // Обеспечиваем, что роль является допустимым типом UserRole
-    const userRole = ((userData.role || 'patient') as UserRole);
+    // Преобразуем строковую роль в UserRole
+    const userRole = validateRole(userData.role);
 
     const user: UserProfile = {
       id: userData.id,
@@ -66,6 +54,18 @@ export async function fetchUserData(userId: string) {
       clinic: userData.clinic,
       role: userRole,
     };
+
+    // Получаем данные документов пользователя
+    const { data: documentsData, error: documentsError } = await supabase
+      .from("documents")
+      .select("*")
+      .eq("user_id", userId)
+      .single();
+
+    if (documentsError && documentsError.code !== "PGRST116") {
+      console.error("Error fetching user documents:", documentsError);
+      throw documentsError;
+    }
 
     const userDocuments: UserDocuments | null = documentsData
       ? {
@@ -86,4 +86,13 @@ export async function fetchUserData(userId: string) {
     console.error("Error in fetchUserData:", error);
     throw error;
   }
+}
+
+// Функция для проверки и преобразования строковой роли в UserRole
+function validateRole(role: string): UserRole {
+  if (role === 'admin' || role === 'doctor' || role === 'patient') {
+    return role as UserRole;
+  }
+  // По умолчанию возвращаем 'patient', если роль не соответствует ожидаемым значениям
+  return 'patient';
 }

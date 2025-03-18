@@ -1,5 +1,5 @@
 
-import { UserProfile, UserDocuments } from "@/types/auth";
+import { UserProfile, UserDocuments, UserRole } from "@/types/auth";
 
 export interface AuthUser {
   id: string;
@@ -10,6 +10,11 @@ export interface AuthUser {
 export interface Session {
   token: string;
   user: AuthUser;
+  // Adding the missing properties expected by the application
+  access_token: string;
+  refresh_token: string;
+  expires_in: number;
+  token_type: string;
 }
 
 export interface ProfileWithSession {

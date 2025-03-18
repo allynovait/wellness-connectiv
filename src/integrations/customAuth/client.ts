@@ -1,6 +1,7 @@
 
 import { supabase } from "../supabase/client";
 import { ProfileWithSession, Session } from "./types";
+import { UserProfile, UserRole } from "@/types/auth";
 
 // Проверка активной сессии
 export const getSession = async (): Promise<Session | null> => {
@@ -38,7 +39,12 @@ export const getSession = async (): Promise<Session | null> => {
         id: userData.id,
         email: userData.email,
         email_confirmed_at: userData.email_confirmed_at
-      }
+      },
+      // Add the missing properties
+      access_token: sessionToken,
+      refresh_token: sessionToken,
+      expires_in: 3600,
+      token_type: 'bearer'
     };
   } catch (error) {
     console.error("Ошибка при получении сессии:", error);
@@ -89,9 +95,25 @@ export const signIn = async (email: string, password: string): Promise<ProfileWi
       .select('*')
       .eq('user_id', userId)
       .single();
+
+    // Преобразуем строковую role в UserRole
+    const userRole = validateRole(profileData.role);
+    
+    // Создаем объект профиля с правильным типом role
+    const userProfile: UserProfile = {
+      id: profileData.id,
+      full_name: profileData.full_name,
+      birth_date: profileData.birth_date,
+      gender: profileData.gender,
+      photo: profileData.photo,
+      card_number: profileData.card_number,
+      attachment_date: profileData.attachment_date,
+      clinic: profileData.clinic,
+      role: userRole
+    };
     
     return {
-      profile: profileData,
+      profile: userProfile,
       documents: docsData || null,
       session: {
         token: sessionToken,
@@ -99,7 +121,11 @@ export const signIn = async (email: string, password: string): Promise<ProfileWi
           id: userId,
           email: profileData.email,
           email_confirmed_at: profileData.email_confirmed_at
-        }
+        },
+        access_token: sessionToken,
+        refresh_token: sessionToken,
+        expires_in: 3600,
+        token_type: 'bearer'
       }
     };
   } catch (error) {
@@ -107,6 +133,15 @@ export const signIn = async (email: string, password: string): Promise<ProfileWi
     return null;
   }
 };
+
+// Функция для проверки и преобразования строковой роли в UserRole
+function validateRole(role: string): UserRole {
+  if (role === 'admin' || role === 'doctor' || role === 'patient') {
+    return role as UserRole;
+  }
+  // По умолчанию возвращаем 'patient', если роль не соответствует ожидаемым значениям
+  return 'patient';
+}
 
 // Регистрация пользователя
 export const signUp = async (
@@ -136,7 +171,7 @@ export const signUp = async (
         email,
         password,
         full_name,
-        role,
+        role: validateRole(role), // Проверяем роль при сохранении
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
         is_active: true
