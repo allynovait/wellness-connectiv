@@ -2,58 +2,69 @@
 import { supabase } from "@/integrations/supabase/client";
 import { UserProfile, UserDocuments } from "@/types/auth";
 
-export const fetchUserData = async (userId: string): Promise<{
-  user: UserProfile | null;
-  userDocuments: UserDocuments | null;
-}> => {
+export async function fetchUserData(userId: string) {
+  console.log(`Fetching profile data for user ${userId}`);
+  
   try {
-    if (!userId) {
-      console.error("Cannot fetch user data: User ID is missing");
-      return { user: null, userDocuments: null };
-    }
-    
-    console.log("Fetching user profile data for ID:", userId);
-    const { data: profileData, error: profileError } = await supabase
+    // Get user profile data
+    const { data: userData, error: userError } = await supabase
       .from("profiles")
       .select("*")
       .eq("id", userId)
-      .maybeSingle();
+      .single();
 
-    if (profileError) {
-      console.error("Error fetching profile data:", profileError);
-      throw profileError;
+    if (userError) {
+      console.error("Error fetching user profile:", userError);
+      throw userError;
     }
-    
-    console.log("Fetched profile data:", profileData);
-    
-    // If no profile data was found but we have a userId
-    if (!profileData) {
-      console.warn("No profile found for user ID:", userId);
+
+    if (!userData) {
+      console.error("No user profile found for ID:", userId);
+      throw new Error("User profile not found");
     }
-    
-    console.log("Fetching user documents data for ID:", userId);
-    const { data: docsData, error: docsError } = await supabase
+
+    // Get user documents data
+    const { data: documentsData, error: documentsError } = await supabase
       .from("documents")
       .select("*")
       .eq("user_id", userId)
-      .maybeSingle();
+      .single();
 
-    if (docsError) {
-      console.error("Error fetching documents data:", docsError);
-      throw docsError;
+    if (documentsError && documentsError.code !== "PGRST116") {
+      // PGRST116 is "no rows returned" - normal if user has no documents yet
+      console.error("Error fetching user documents:", documentsError);
+      throw documentsError;
     }
-    
-    console.log("Fetched documents data:", docsData);
-    
-    // Add a timeout to avoid immediate state changes
-    await new Promise(resolve => setTimeout(resolve, 300));
-    
-    return {
-      user: profileData as UserProfile || null,
-      userDocuments: docsData as UserDocuments || null
+
+    const user: UserProfile = {
+      id: userData.id,
+      full_name: userData.full_name,
+      birth_date: userData.birth_date,
+      gender: userData.gender,
+      photo: userData.photo,
+      card_number: userData.card_number,
+      attachment_date: userData.attachment_date,
+      clinic: userData.clinic,
+      role: userData.role,
     };
+
+    const userDocuments: UserDocuments | null = documentsData
+      ? {
+          id: documentsData.id,
+          user_id: documentsData.user_id,
+          passport_series: documentsData.passport_series,
+          passport_number: documentsData.passport_number,
+          passport_issued_by: documentsData.passport_issued_by,
+          passport_issued_date: documentsData.passport_issued_date,
+          snils: documentsData.snils,
+          inn: documentsData.inn,
+        }
+      : null;
+
+    console.log("Successfully fetched user data:", { user, userDocuments });
+    return { user, userDocuments };
   } catch (error) {
-    console.error("Error fetching user data:", error);
+    console.error("Error in fetchUserData:", error);
     throw error;
   }
-};
+}

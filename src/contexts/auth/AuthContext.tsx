@@ -47,6 +47,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             console.log("Fetching user data after auth state change");
             setLoading(true);
             const userData = await fetchUserData(session.user.id);
+            
+            if (!userData) {
+              throw new Error("Failed to fetch user data");
+            }
+            
             setUser(userData.user);
             setUserDocuments(userData.userDocuments);
           } catch (error) {
@@ -79,9 +84,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setUserDocuments(null);
           setIsEmailVerified(false);
           setLoading(false);
-        } else {
+        } else if (!session) {
           // For any other event without a session, ensure we clear user data
-          // This helps with handling cases like account deletion even if not directly exposed as an event
+          // This helps with handling cases like account deletion, login failures
           setSession(null);
           setUser(null);
           setUserDocuments(null);
@@ -109,6 +114,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setIsEmailVerified(session.user?.email_confirmed_at != null);
           console.log("Fetching initial user data for ID:", session.user.id);
           const userData = await fetchUserData(session.user.id);
+          
+          if (!userData) {
+            throw new Error("Failed to fetch initial user data");
+          }
+          
           console.log("Initial user data:", userData);
           setUser(userData.user);
           setUserDocuments(userData.userDocuments);

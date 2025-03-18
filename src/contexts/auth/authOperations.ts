@@ -37,6 +37,7 @@ export const signIn = async (
         navigate("/");
       }, 800); // Giving more time for the auth state to update
     }
+    return { success: true };
   } catch (error: any) {
     console.error("Login error caught:", error);
     if (error.message === "Email not confirmed") {
@@ -47,6 +48,7 @@ export const signIn = async (
       toast.error(error.message || "Ошибка входа");
     }
     setLoading(false); // Explicitly set loading to false here on error
+    return { success: false, error };
   } finally {
     // Only set loading to false if no error was thrown
     // because we've already set it to false in the catch block

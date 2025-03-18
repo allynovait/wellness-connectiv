@@ -92,11 +92,16 @@ const Auth = () => {
       setLoginLoading(true);
       setLoginError(null); // Clear any previous errors
       console.log("Login form submitted with email:", loginEmail);
-      await signIn(loginEmail, loginPassword);
+      const result = await signIn(loginEmail, loginPassword);
+      
+      if (!result?.success) {
+        // Login failed, but we'll let the error handling in signIn function take care of it
+        // We just ensure we remain on the auth page
+        setLoginLoading(false);
+      }
     } catch (error: any) {
       console.error("Login error in form:", error);
       setLoginError(error.message || "Ошибка входа");
-    } finally {
       setLoginLoading(false);
     }
   };
@@ -184,7 +189,7 @@ const Auth = () => {
                     >
                       {resendLoading ? "Отправка..." : 
                        isCooldown ? `Подождите ${formatCooldownTime()}с` : 
-                       "Отправить повторно"}
+                       "Отправи��ь повторно"}
                       {!resendLoading && !isCooldown && <RefreshCw className="h-4 w-4" />}
                     </Button>
                   </form>
