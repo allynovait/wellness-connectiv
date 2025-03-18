@@ -1,3 +1,4 @@
+
 import { supabase, getAuthRedirectOptions } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { UserProfile, UserDocuments } from "@/types/auth";

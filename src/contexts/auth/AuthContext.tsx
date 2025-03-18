@@ -52,6 +52,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           } catch (error) {
             console.error("Error fetching user data after auth state change:", error);
             toast.error("Ошибка загрузки данных пользователя");
+            
+            // Clear session on error fetching user data to prevent infinite loading states
+            if (event !== 'SIGNED_IN') {
+              setSession(null);
+              setUser(null);
+              setUserDocuments(null);
+              setIsEmailVerified(false);
+            }
           } finally {
             setLoading(false);
           }
@@ -64,6 +72,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           
           // Ensure navigation to auth page on sign out
           navigate("/auth");
+        } else if (event === 'USER_DELETED' || event === 'PASSWORD_RECOVERY') {
+          // Clear all user data on these events
+          setSession(null);
+          setUser(null);
+          setUserDocuments(null);
+          setIsEmailVerified(false);
+          setLoading(false);
         }
       }
     );
@@ -92,6 +107,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
       } catch (error) {
         console.error("Error getting initial session:", error);
+        // On error, ensure we clear any potentially invalid session
+        setSession(null);
+        setUser(null);
+        setUserDocuments(null);
+        setIsEmailVerified(false);
         toast.error("Ошибка инициализации сессии");
       } finally {
         setLoading(false);
