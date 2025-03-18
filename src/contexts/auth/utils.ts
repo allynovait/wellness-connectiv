@@ -55,7 +55,6 @@ export async function fetchUserData(userId: string) {
       .single();
 
     if (documentsError && documentsError.code !== "PGRST116") {
-      // PGRST116 is "no rows returned" - normal if user has no documents yet
       console.error("Error fetching user documents:", documentsError);
       throw documentsError;
     }
