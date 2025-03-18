@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/auth";
 import { Card, CardContent } from "@/components/ui/card";
@@ -25,6 +24,7 @@ const Auth = () => {
   const [loginEmail, setLoginEmail] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
   const [loginLoading, setLoginLoading] = useState(false);
+  const [loginError, setLoginError] = useState<string | null>(null);
 
   // Register form
   const [registerEmail, setRegisterEmail] = useState("");
@@ -90,10 +90,13 @@ const Auth = () => {
 
     try {
       setLoginLoading(true);
+      setLoginError(null); // Clear any previous errors
       console.log("Login form submitted with email:", loginEmail);
       await signIn(loginEmail, loginPassword);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Login error in form:", error);
+      setLoginError(error.message || "Ошибка входа");
+    } finally {
       setLoginLoading(false);
     }
   };
@@ -195,8 +198,8 @@ const Auth = () => {
     return null;
   };
 
-  // Direct redirect if user is authenticated and verified
-  if (session && !loading && isEmailVerified) {
+  // Only redirect if user is authenticated, verified, and we're not in the middle of logging in
+  if (session && !loading && isEmailVerified && !loginLoading) {
     console.log("Redirecting to home from render");
     return <Navigate to="/" replace />;
   }
@@ -214,6 +217,18 @@ const Auth = () => {
           </div>
           
           {renderVerificationAlert()}
+          
+          {loginError && (
+            <Alert className="mb-6 bg-red-50 border-red-500">
+              <AlertCircle className="h-4 w-4 text-red-500" />
+              <AlertTitle className="text-red-700">Ошибка входа</AlertTitle>
+              <AlertDescription className="text-red-600">
+                {loginError === "Invalid login credentials" 
+                  ? "Неверный логин или пароль" 
+                  : loginError}
+              </AlertDescription>
+            </Alert>
+          )}
           
           <Tabs value={activeTab} onValueChange={(val) => setActiveTab(val as "login" | "register")}>
             <TabsList className="grid grid-cols-2 w-full mb-6">

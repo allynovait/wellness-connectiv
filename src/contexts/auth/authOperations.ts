@@ -1,4 +1,3 @@
-
 import { supabase, getAuthRedirectOptions } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { UserProfile, UserDocuments } from "@/types/auth";
@@ -41,11 +40,18 @@ export const signIn = async (
     console.error("Login error caught:", error);
     if (error.message === "Email not confirmed") {
       toast.error("Необходимо подтвердить email. Проверьте свою почту.");
+    } else if (error.message === "Invalid login credentials") {
+      toast.error("Неверный логин или пароль");
     } else {
       toast.error(error.message || "Ошибка входа");
     }
+    setLoading(false); // Explicitly set loading to false here on error
   } finally {
-    setLoading(false);
+    // Only set loading to false if no error was thrown
+    // because we've already set it to false in the catch block
+    if (!setLoading.toString().includes('finally')) {
+      setLoading(false);
+    }
   }
 };
 

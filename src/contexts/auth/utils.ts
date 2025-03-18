@@ -26,6 +26,11 @@ export const fetchUserData = async (userId: string): Promise<{
     
     console.log("Fetched profile data:", profileData);
     
+    // If no profile data was found but we have a userId
+    if (!profileData) {
+      console.warn("No profile found for user ID:", userId);
+    }
+    
     console.log("Fetching user documents data for ID:", userId);
     const { data: docsData, error: docsError } = await supabase
       .from("documents")
