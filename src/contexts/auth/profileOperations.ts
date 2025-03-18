@@ -2,6 +2,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import { UserProfile, UserDocuments } from "@/types/auth";
 import { toast } from "sonner";
+import { getSession } from "@/integrations/customAuth/client";
 
 export const updateProfile = async (
   profile: Partial<UserProfile>,
@@ -9,21 +10,16 @@ export const updateProfile = async (
   refreshUserData: () => Promise<{ user: UserProfile | null; userDocuments: UserDocuments | null }>
 ): Promise<boolean> => {
   try {
-    // Проверяем наличие авторизованной сессии
-    const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
-    if (sessionError) {
-      console.error("Error getting session:", sessionError);
-      toast.error("Ошибка получения сессии");
-      return false;
-    }
+    // Get session from our custom auth system instead of Supabase's
+    const session = await getSession();
     
-    if (!sessionData.session) {
+    if (!session) {
       console.error("Cannot update profile: No active session");
       toast.error("Вы не авторизованы");
       return false;
     }
     
-    const userId = sessionData.session.user.id;
+    const userId = session.user.id;
     console.log("Current session user ID:", userId);
     
     if (!userId) {
@@ -59,7 +55,7 @@ export const updateProfile = async (
         id: userId,
         created_at: new Date().toISOString(),
         // Ensure full_name is always provided as it's required
-        full_name: profile.full_name || sessionData.session.user.email?.split('@')[0] || 'Новый пользователь',
+        full_name: profile.full_name || session.user.email?.split('@')[0] || 'Новый пользователь',
         role: profile.role || 'patient', // Устанавливаем роль по умолчанию
       };
       
@@ -106,21 +102,16 @@ export const updateDocuments = async (
   refreshUserData: () => Promise<{ user: UserProfile | null; userDocuments: UserDocuments | null }>
 ): Promise<boolean> => {
   try {
-    // Проверяем наличие авторизованной сессии
-    const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
-    if (sessionError) {
-      console.error("Error getting session:", sessionError);
-      toast.error("Ошибка получения сессии");
-      return false;
-    }
+    // Get session from our custom auth system instead of Supabase's
+    const session = await getSession();
     
-    if (!sessionData.session) {
+    if (!session) {
       console.error("Cannot update documents: No active session");
       toast.error("Вы не авторизованы");
       return false;
     }
     
-    const userId = sessionData.session.user.id;
+    const userId = session.user.id;
     console.log("Current session user ID for documents update:", userId);
 
     if (!userId) {

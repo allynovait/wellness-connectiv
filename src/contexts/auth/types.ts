@@ -1,6 +1,6 @@
 
-import { Session } from "@supabase/supabase-js";
 import { UserProfile, UserDocuments } from "@/types/auth";
+import { Session } from "@/integrations/customAuth/types";
 
 export interface AuthContextType {
   session: Session | null;
