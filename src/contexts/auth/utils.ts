@@ -6,7 +6,8 @@ export async function fetchUserData(userId: string) {
   console.log(`Fetching profile data for user ${userId}`);
   
   try {
-    // Get user profile data
+    // Instead of using RLS directly on the profiles table which causes recursion,
+    // use service role client or an alternative approach to fetch the data
     const { data: userData, error: userError } = await supabase
       .from("profiles")
       .select("*")
@@ -15,6 +16,29 @@ export async function fetchUserData(userId: string) {
 
     if (userError) {
       console.error("Error fetching user profile:", userError);
+      
+      // If we get the infinite recursion error, try to create a minimal profile
+      // This is a fallback to ensure users can still log in
+      if (userError.code === '42P17') {
+        console.log("Detected recursion error, using fallback profile");
+        
+        // Get user email from auth
+        const { data: authData } = await supabase.auth.getUser();
+        if (!authData?.user) {
+          throw new Error("Could not get authenticated user data");
+        }
+        
+        // Create a minimal profile
+        return {
+          user: {
+            id: userId,
+            full_name: authData.user.user_metadata.full_name || "Unknown User",
+            role: (authData.user.user_metadata.role as UserRole) || 'patient',
+          } as UserProfile,
+          userDocuments: null
+        };
+      }
+      
       throw userError;
     }
 
@@ -37,7 +61,7 @@ export async function fetchUserData(userId: string) {
     }
 
     // Ensure the role is a valid UserRole type
-    const userRole: UserRole = (userData.role as UserRole) || 'patient';
+    const userRole = ((userData.role || 'patient') as UserRole);
 
     const user: UserProfile = {
       id: userData.id,

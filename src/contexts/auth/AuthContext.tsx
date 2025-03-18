@@ -54,18 +54,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             
             setUser(userData.user);
             setUserDocuments(userData.userDocuments);
-            setLoading(false);
           } catch (error) {
             console.error("Error fetching user data after auth state change:", error);
             toast.error("Ошибка загрузки данных пользователя");
             
-            // Clear session on error fetching user data to prevent infinite loading states
+            // Don't clear session on recursion error, as we have a fallback
+            if (error && (error as any).code === '42P17') {
+              console.log("Recursion error detected, but we have a fallback");
+              setLoading(false);
+              return;
+            }
+            
+            // Clear session on other errors to prevent infinite loading states
             if (event !== 'SIGNED_IN') {
               setSession(null);
               setUser(null);
               setUserDocuments(null);
               setIsEmailVerified(false);
             }
+          } finally {
             setLoading(false);
           }
         } else if (event === 'SIGNED_OUT') {
@@ -113,15 +120,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (session) {
           setIsEmailVerified(session.user?.email_confirmed_at != null);
           console.log("Fetching initial user data for ID:", session.user.id);
-          const userData = await fetchUserData(session.user.id);
-          
-          if (!userData) {
-            throw new Error("Failed to fetch initial user data");
+          try {
+            const userData = await fetchUserData(session.user.id);
+            
+            if (!userData) {
+              throw new Error("Failed to fetch initial user data");
+            }
+            
+            console.log("Initial user data:", userData);
+            setUser(userData.user);
+            setUserDocuments(userData.userDocuments);
+          } catch (error) {
+            console.error("Error fetching initial user data:", error);
+            
+            // Don't clear the session on recursion error
+            if (error && (error as any).code === '42P17') {
+              console.log("Recursion error detected on init, using fallback");
+              setLoading(false);
+              return;
+            }
+            
+            // On other errors, clear session
+            setSession(null);
+            setUser(null);
+            setUserDocuments(null);
+            setIsEmailVerified(false);
+            toast.error("Ошибка загрузки данных пользователя");
           }
-          
-          console.log("Initial user data:", userData);
-          setUser(userData.user);
-          setUserDocuments(userData.userDocuments);
         }
       } catch (error) {
         console.error("Error getting initial session:", error);
