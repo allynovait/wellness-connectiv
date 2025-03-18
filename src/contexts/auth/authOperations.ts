@@ -27,7 +27,7 @@ export const signIn = async (
     if (data.user && !data.user.email_confirmed_at) {
       setIsEmailVerified(false);
       toast.warning("Необходимо подтвердить email. Проверьте свою почту.");
-      return; // Exit early if email not verified
+      return { success: false, error: { message: "Email not confirmed" } };
     } else {
       setIsEmailVerified(true);
       toast.success("Успешный вход");

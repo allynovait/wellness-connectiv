@@ -1,6 +1,6 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { UserProfile, UserDocuments } from "@/types/auth";
+import { UserProfile, UserDocuments, UserRole } from "@/types/auth";
 
 export async function fetchUserData(userId: string) {
   console.log(`Fetching profile data for user ${userId}`);
@@ -36,6 +36,9 @@ export async function fetchUserData(userId: string) {
       throw documentsError;
     }
 
+    // Ensure the role is a valid UserRole type
+    const userRole: UserRole = (userData.role as UserRole) || 'patient';
+
     const user: UserProfile = {
       id: userData.id,
       full_name: userData.full_name,
@@ -45,7 +48,7 @@ export async function fetchUserData(userId: string) {
       card_number: userData.card_number,
       attachment_date: userData.attachment_date,
       clinic: userData.clinic,
-      role: userData.role,
+      role: userRole,
     };
 
     const userDocuments: UserDocuments | null = documentsData

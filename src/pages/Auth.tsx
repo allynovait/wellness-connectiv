@@ -94,7 +94,7 @@ const Auth = () => {
       console.log("Login form submitted with email:", loginEmail);
       const result = await signIn(loginEmail, loginPassword);
       
-      if (!result?.success) {
+      if (result && !result.success) {
         // Login failed, but we'll let the error handling in signIn function take care of it
         // We just ensure we remain on the auth page
         setLoginLoading(false);

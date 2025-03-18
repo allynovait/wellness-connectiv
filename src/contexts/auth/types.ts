@@ -8,7 +8,7 @@ export interface AuthContextType {
   userDocuments: UserDocuments | null;
   loading: boolean;
   isEmailVerified: boolean;
-  signIn: (email: string, password: string) => Promise<void>;
+  signIn: (email: string, password: string) => Promise<{ success: boolean; error?: any } | undefined>;
   signUp: (email: string, password: string, full_name: string, role: string) => Promise<void>;
   signOut: () => Promise<void>;
   refreshUserData: () => Promise<{ user: UserProfile | null; userDocuments: UserDocuments | null }>;
