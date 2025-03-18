@@ -1,3 +1,4 @@
+
 import { createContext, useState, useEffect, ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Session } from "@supabase/supabase-js";
@@ -53,6 +54,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             
             setUser(userData.user);
             setUserDocuments(userData.userDocuments);
+            setLoading(false);
           } catch (error) {
             console.error("Error fetching user data after auth state change:", error);
             toast.error("Ошибка загрузки данных пользователя");
@@ -64,7 +66,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               setUserDocuments(null);
               setIsEmailVerified(false);
             }
-          } finally {
             setLoading(false);
           }
         } else if (event === 'SIGNED_OUT') {
