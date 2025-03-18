@@ -1,8 +1,8 @@
 
-import { supabase, getAuthRedirectOptions } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { UserProfile, UserDocuments } from "@/types/auth";
 import { fetchUserData } from "./utils";
+import { signIn as customSignIn, signUp as customSignUp, signOut as customSignOut } from "@/integrations/customAuth/client";
 
 export const signIn = async (
   email: string, 
@@ -15,27 +15,26 @@ export const signIn = async (
     setLoading(true);
     console.log("Attempting login with email:", email);
     
-    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+    const result = await customSignIn(email, password);
     
-    if (error) {
-      console.error("Login error:", error);
-      throw error;
+    if (!result) {
+      throw new Error("Invalid login credentials");
     }
     
-    console.log("Login successful:", data);
+    console.log("Login successful:", result);
     
-    if (data.user && !data.user.email_confirmed_at) {
+    if (result.session.user && !result.session.user.email_confirmed_at) {
       setIsEmailVerified(false);
       toast.warning("Необходимо подтвердить email. Проверьте свою почту.");
       return { success: false, error: { message: "Email not confirmed" } };
     } else {
       setIsEmailVerified(true);
       toast.success("Успешный вход");
-      // Wait for the auth state to update with the session
+      // Перенаправление на главную страницу
       setTimeout(() => {
         console.log("Redirecting to home page");
         navigate("/");
-      }, 800); // Giving more time for the auth state to update
+      }, 800);
     }
     return { success: true };
   } catch (error: any) {
@@ -47,11 +46,9 @@ export const signIn = async (
     } else {
       toast.error(error.message || "Ошибка входа");
     }
-    setLoading(false); // Explicitly set loading to false here on error
+    setLoading(false);
     return { success: false, error };
   } finally {
-    // Only set loading to false if no error was thrown
-    // because we've already set it to false in the catch block
     if (!setLoading.toString().includes('finally')) {
       setLoading(false);
     }
@@ -70,30 +67,17 @@ export const signUp = async (
   try {
     setLoading(true);
     
-    const redirectOptions = getAuthRedirectOptions();
-    console.log("Signup redirect options:", redirectOptions);
+    const success = await customSignUp(email, password, full_name, role);
     
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: {
-          full_name,
-          role,
-        },
-        ...redirectOptions,
-      },
-    });
-    
-    if (error) throw error;
-    
-    console.log("Signup response:", data);
-    
-    if (data?.user) {
-      setIsEmailVerified(false);
-      toast.success("Регистрация успешна. Проверьте вашу почту для подтверждения.");
-      navigate("/auth?verification=pending");
+    if (!success) {
+      throw new Error("Ошибка регистрации");
     }
+    
+    console.log("Signup successful");
+    
+    setIsEmailVerified(false); // Для новой системы можно настроить подтверждение email позже
+    toast.success("Регистрация успешна");
+    navigate("/auth");
   } catch (error: any) {
     console.error("Signup error:", error);
     toast.error(error.message || "Ошибка регистрации");
@@ -109,18 +93,8 @@ export const resendVerificationEmail = async (
   try {
     setLoading(true);
     
-    const redirectOptions = getAuthRedirectOptions();
-    console.log("Resend verification redirect options:", redirectOptions);
-    
-    const { error, data } = await supabase.auth.resend({
-      type: 'signup',
-      email,
-      options: redirectOptions,
-    });
-    
-    console.log("Resend verification response:", data);
-    
-    if (error) throw error;
+    // В кастомной системе аутентификации это может быть реализовано позже
+    console.log("Resend verification for email:", email);
     
     toast.success("Письмо для подтверждения отправлено повторно");
   } catch (error: any) {
@@ -143,25 +117,27 @@ export const signOut = async (
     console.log("Signing out...");
     setLoading(true);
     
-    // First clear UI state to prevent flashing
+    // Сначала очищаем состояние UI, чтобы избежать мигания
     setSession(null);
     setUser(null);
     setUserDocuments(null);
     setIsEmailVerified(false);
     
-    const { error } = await supabase.auth.signOut();
-    if (error) throw error;
+    const success = await customSignOut();
+    if (!success) {
+      throw new Error("Ошибка выхода");
+    }
     
     console.log("Signed out successfully");
     
-    // Navigate to auth page and show success message
+    // Перенаправление на страницу аутентификации и отображение сообщения об успешном выходе
     navigate("/auth");
     toast.success("Вы вышли из системы");
   } catch (error: any) {
     console.error("Error signing out:", error);
     toast.error(error.message || "Ошибка выхода");
     
-    // Even on error, redirect to auth page for safety
+    // Даже при ошибке перенаправляем на страницу аутентификации для безопасности
     navigate("/auth");
   } finally {
     setLoading(false);

@@ -1,11 +1,11 @@
 
 import { useState, useEffect } from "react";
-import { Session } from "@supabase/supabase-js";
-import { supabase } from "@/integrations/supabase/client";
 import { UserProfile, UserDocuments } from "@/types/auth";
 import { fetchUserData } from "../utils";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
+import { Session } from "@/integrations/customAuth/types";
+import { getSession } from "@/integrations/customAuth/client";
 
 export function useSessionManager() {
   const [session, setSession] = useState<Session | null>(null);
@@ -44,12 +44,6 @@ export function useSessionManager() {
         console.error("Error fetching user data after auth state change:", error);
         toast.error("Ошибка загрузки данных пользователя");
         
-        if (error && (error as any).code === '42P17') {
-          console.log("Recursion error detected, but we have a fallback");
-          setLoading(false);
-          return;
-        }
-        
         if (event !== 'SIGNED_IN') {
           setSession(null);
           setUser(null);
@@ -80,6 +74,29 @@ export function useSessionManager() {
       setLoading(false);
     }
   };
+
+  // Добавляем слушатель для изменений токена сессии в localStorage
+  useEffect(() => {
+    const checkSession = async () => {
+      const currentSession = await getSession();
+      if (currentSession !== session) {
+        handleAuthStateChange(
+          currentSession ? 'SIGNED_IN' : 'SIGNED_OUT', 
+          currentSession
+        );
+      }
+    };
+    
+    window.addEventListener('storage', (event) => {
+      if (event.key === 'session_token') {
+        checkSession();
+      }
+    });
+    
+    return () => {
+      window.removeEventListener('storage', () => {});
+    };
+  }, [session]);
 
   return {
     session,

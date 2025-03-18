@@ -1,13 +1,13 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { UserProfile, UserDocuments, UserRole } from "@/types/auth";
+import { getSession } from "@/integrations/customAuth/client";
 
 export async function fetchUserData(userId: string) {
   console.log(`Fetching profile data for user ${userId}`);
   
   try {
-    // Instead of using RLS directly on the profiles table which causes recursion,
-    // use service role client or an alternative approach to fetch the data
+    // Получаем данные профиля из таблицы profiles
     const { data: userData, error: userError } = await supabase
       .from("profiles")
       .select("*")
@@ -17,29 +17,22 @@ export async function fetchUserData(userId: string) {
     if (userError) {
       console.error("Error fetching user profile:", userError);
       
-      // If we get the infinite recursion error, try to create a minimal profile
-      // This is a fallback to ensure users can still log in
-      if (userError.code === '42P17') {
-        console.log("Detected recursion error, using fallback profile");
-        
-        // Get user email from auth
-        const { data: authData } = await supabase.auth.getUser();
-        if (!authData?.user) {
-          throw new Error("Could not get authenticated user data");
-        }
-        
-        // Create a minimal profile
-        return {
-          user: {
-            id: userId,
-            full_name: authData.user.user_metadata.full_name || "Unknown User",
-            role: (authData.user.user_metadata.role as UserRole) || 'patient',
-          } as UserProfile,
-          userDocuments: null
-        };
+      // Если возникает ошибка, пытаемся создать минимальный профиль
+      // Это запасной вариант, чтобы пользователи все еще могли войти в систему
+      const session = await getSession();
+      if (!session) {
+        throw new Error("Could not get authenticated user data");
       }
-      
-      throw userError;
+        
+      // Создаем минимальный профиль
+      return {
+        user: {
+          id: userId,
+          full_name: "Unknown User",
+          role: 'patient' as UserRole,
+        } as UserProfile,
+        userDocuments: null
+      };
     }
 
     if (!userData) {
@@ -47,7 +40,7 @@ export async function fetchUserData(userId: string) {
       throw new Error("User profile not found");
     }
 
-    // Get user documents data
+    // Получаем данные документов пользователя
     const { data: documentsData, error: documentsError } = await supabase
       .from("documents")
       .select("*")
@@ -59,7 +52,7 @@ export async function fetchUserData(userId: string) {
       throw documentsError;
     }
 
-    // Ensure the role is a valid UserRole type
+    // Обеспечиваем, что роль является допустимым типом UserRole
     const userRole = ((userData.role || 'patient') as UserRole);
 
     const user: UserProfile = {

@@ -63,9 +63,15 @@ export type Database = {
           card_number: string | null
           clinic: string | null
           created_at: string
+          email: string | null
+          email_confirmed_at: string | null
           full_name: string
           gender: string | null
           id: string
+          is_active: boolean | null
+          last_sign_in_at: string | null
+          password: string | null
+          phone: string | null
           photo: string | null
           role: string
           updated_at: string
@@ -76,9 +82,15 @@ export type Database = {
           card_number?: string | null
           clinic?: string | null
           created_at?: string
+          email?: string | null
+          email_confirmed_at?: string | null
           full_name: string
           gender?: string | null
           id: string
+          is_active?: boolean | null
+          last_sign_in_at?: string | null
+          password?: string | null
+          phone?: string | null
           photo?: string | null
           role?: string
           updated_at?: string
@@ -89,14 +101,52 @@ export type Database = {
           card_number?: string | null
           clinic?: string | null
           created_at?: string
+          email?: string | null
+          email_confirmed_at?: string | null
           full_name?: string
           gender?: string | null
           id?: string
+          is_active?: boolean | null
+          last_sign_in_at?: string | null
+          password?: string | null
+          phone?: string | null
           photo?: string | null
           role?: string
           updated_at?: string
         }
         Relationships: []
+      }
+      reset_password_tokens: {
+        Row: {
+          created_at: string | null
+          expires_at: string
+          id: string
+          token: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          expires_at: string
+          id?: string
+          token: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          expires_at?: string
+          id?: string
+          token?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reset_password_tokens_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       resumes: {
         Row: {
@@ -204,6 +254,41 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: []
+      }
+      sessions: {
+        Row: {
+          created_at: string | null
+          expires_at: string
+          id: string
+          last_accessed_at: string | null
+          token: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          expires_at: string
+          id?: string
+          last_accessed_at?: string | null
+          token: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          expires_at?: string
+          id?: string
+          last_accessed_at?: string | null
+          token?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sessions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       training_exercises: {
         Row: {
@@ -430,6 +515,20 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      authenticate_user: {
+        Args: {
+          user_email: string
+          user_password: string
+        }
+        Returns: string
+      }
+      create_session: {
+        Args: {
+          user_id: string
+          expires_in?: unknown
+        }
+        Returns: string
+      }
       create_user_data: {
         Args: {
           user_id: string
@@ -444,6 +543,19 @@ export type Database = {
       get_user_role: {
         Args: Record<PropertyKey, never>
         Returns: string
+      }
+      validate_session: {
+        Args: {
+          session_token: string
+        }
+        Returns: string
+      }
+      verify_password: {
+        Args: {
+          input_password: string
+          stored_password: string
+        }
+        Returns: boolean
       }
     }
     Enums: {

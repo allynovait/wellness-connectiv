@@ -1,9 +1,9 @@
 
-import { supabase } from "@/integrations/supabase/client";
 import { UserProfile, UserDocuments } from "@/types/auth";
 import { fetchUserData } from "../utils";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
+import { getSession } from "@/integrations/customAuth/client";
 
 export function useUserDataRefresh(
   user: UserProfile | null,
@@ -15,15 +15,9 @@ export function useUserDataRefresh(
   const navigate = useNavigate();
 
   const refreshUserData = async () => {
-    const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+    const session = await getSession();
     
-    if (sessionError) {
-      console.error("Error getting session for refresh:", sessionError);
-      toast.error("Ошибка получения сессии");
-      return { user, userDocuments };
-    }
-    
-    if (!sessionData.session?.user.id) {
+    if (!session) {
       console.log("Cannot refresh data: No active session");
       toast.error("Нет активной сессии");
       navigate("/auth");
@@ -31,9 +25,9 @@ export function useUserDataRefresh(
     }
     
     try {
-      console.log("Refreshing user data for ID:", sessionData.session.user.id);
+      console.log("Refreshing user data for ID:", session.user.id);
       setLoading(true);
-      const userData = await fetchUserData(sessionData.session.user.id);
+      const userData = await fetchUserData(session.user.id);
       console.log("Refreshed user data:", userData);
       setUser(userData.user);
       setUserDocuments(userData.userDocuments);

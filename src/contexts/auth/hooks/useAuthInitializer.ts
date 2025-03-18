@@ -1,8 +1,8 @@
 
 import { useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
 import { fetchUserData } from "../utils";
 import { toast } from "sonner";
+import { getSession } from "@/integrations/customAuth/client";
 
 export function useAuthInitializer(setters: {
   setSession: (session: any) => void;
@@ -18,12 +18,7 @@ export function useAuthInitializer(setters: {
       console.log("Initializing session");
       setLoading(true);
       try {
-        const { data: { session }, error } = await supabase.auth.getSession();
-        
-        if (error) {
-          console.error("Error getting initial session:", error);
-          throw error;
-        }
+        const session = await getSession();
         
         console.log("Initial session:", session?.user?.email);
         setSession(session);
@@ -43,12 +38,6 @@ export function useAuthInitializer(setters: {
             setUserDocuments(userData.userDocuments);
           } catch (error) {
             console.error("Error fetching initial user data:", error);
-            
-            if (error && (error as any).code === '42P17') {
-              console.log("Recursion error detected on init, using fallback");
-              setLoading(false);
-              return;
-            }
             
             setSession(null);
             setUser(null);
