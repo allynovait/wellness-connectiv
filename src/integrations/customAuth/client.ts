@@ -1,4 +1,3 @@
-
 import { supabase } from "../supabase/client";
 import { ProfileWithSession, Session } from "./types";
 import { UserProfile, UserRole } from "@/types/auth";
@@ -40,7 +39,6 @@ export const getSession = async (): Promise<Session | null> => {
         email: userData.email,
         email_confirmed_at: userData.email_confirmed_at
       },
-      // Add the missing properties
       access_token: sessionToken,
       refresh_token: sessionToken,
       expires_in: 3600,
@@ -209,6 +207,42 @@ export const signOut = async (): Promise<boolean> => {
     return true;
   } catch (error) {
     console.error("Ошибка при выходе:", error);
+    return false;
+  }
+};
+
+// Смена пароля пользователя
+export const resetUserPassword = async (
+  email: string,
+  newPassword: string
+): Promise<boolean> => {
+  try {
+    // Получаем данные пользователя по email
+    const { data: userData, error: userError } = await supabase
+      .from('profiles')
+      .select('id')
+      .eq('email', email)
+      .single();
+    
+    if (userError || !userData) {
+      console.error("Ошибка поиска пользователя:", userError);
+      return false;
+    }
+    
+    // Обновляем пароль
+    const { error: updateError } = await supabase
+      .from('profiles')
+      .update({ password: newPassword, updated_at: new Date().toISOString() })
+      .eq('id', userData.id);
+    
+    if (updateError) {
+      console.error("Ошибка обновления пароля:", updateError);
+      return false;
+    }
+    
+    return true;
+  } catch (error) {
+    console.error("Ошибка при сбросе пароля:", error);
     return false;
   }
 };

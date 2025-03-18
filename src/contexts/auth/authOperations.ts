@@ -1,8 +1,7 @@
-
 import { toast } from "sonner";
 import { UserProfile, UserDocuments } from "@/types/auth";
 import { fetchUserData } from "./utils";
-import { signIn as customSignIn, signUp as customSignUp, signOut as customSignOut } from "@/integrations/customAuth/client";
+import { signIn as customSignIn, signUp as customSignUp, signOut as customSignOut, resetUserPassword } from "@/integrations/customAuth/client";
 
 export const signIn = async (
   email: string, 
@@ -139,6 +138,31 @@ export const signOut = async (
     
     // Даже при ошибке перенаправляем на страницу аутентификации для безопасности
     navigate("/auth");
+  } finally {
+    setLoading(false);
+  }
+};
+
+export const resetPassword = async (
+  email: string,
+  newPassword: string,
+  setLoading: (loading: boolean) => void
+) => {
+  try {
+    setLoading(true);
+    
+    const success = await resetUserPassword(email, newPassword);
+    
+    if (!success) {
+      throw new Error("Не удалось изменить пароль");
+    }
+    
+    toast.success("Пароль успешно изменен");
+    return true;
+  } catch (error: any) {
+    console.error("Error resetting password:", error);
+    toast.error(error.message || "Ошибка смены пароля");
+    return false;
   } finally {
     setLoading(false);
   }

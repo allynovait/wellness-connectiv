@@ -15,4 +15,5 @@ export interface AuthContextType {
   updateProfile: (profile: Partial<UserProfile>) => Promise<boolean>;
   updateDocuments: (documents: Partial<UserDocuments>) => Promise<boolean>;
   resendVerificationEmail: (email: string) => Promise<void>;
+  resetPassword: (email: string, newPassword: string) => Promise<boolean>;
 }

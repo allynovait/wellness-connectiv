@@ -9,7 +9,8 @@ import {
   signIn as authSignIn, 
   signUp as authSignUp, 
   signOut as authSignOut,
-  resendVerificationEmail as authResendVerificationEmail 
+  resendVerificationEmail as authResendVerificationEmail,
+  resetPassword as authResetPassword
 } from "./authOperations";
 import { 
   updateProfile as updateUserProfile,
@@ -65,6 +66,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     updateProfile: (profile) => updateUserProfile(profile, user, refreshUserData),
     updateDocuments: (documents) => updateUserDocuments(documents, user, userDocuments, refreshUserData),
     resendVerificationEmail: (email) => authResendVerificationEmail(email, setLoading),
+    resetPassword: (email, newPassword) => authResetPassword(email, newPassword, setLoading),
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

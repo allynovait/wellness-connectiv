@@ -10,6 +10,7 @@ import { Navigate, useLocation, useNavigate } from "react-router-dom";
 import { UserRole } from "@/types/auth";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle, CheckCircle, RefreshCw } from "lucide-react";
+import { AdminPasswordReset } from "@/components/AdminPasswordReset";
 
 const Auth = () => {
   const { signIn, signUp, session, loading, resendVerificationEmail, isEmailVerified } = useAuth();
@@ -189,7 +190,7 @@ const Auth = () => {
                     >
                       {resendLoading ? "Отправка..." : 
                        isCooldown ? `Подождите ${formatCooldownTime()}с` : 
-                       "Отправи��ь повторно"}
+                       "Отправить повторно"}
                       {!resendLoading && !isCooldown && <RefreshCw className="h-4 w-4" />}
                     </Button>
                   </form>
@@ -343,6 +344,9 @@ const Auth = () => {
               </form>
             </TabsContent>
           </Tabs>
+          
+          {/* Add the admin password reset component */}
+          <AdminPasswordReset />
         </CardContent>
       </Card>
     </div>
