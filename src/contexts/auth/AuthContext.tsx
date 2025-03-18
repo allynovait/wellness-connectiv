@@ -72,8 +72,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           
           // Ensure navigation to auth page on sign out
           navigate("/auth");
-        } else if (event === 'USER_DELETED' || event === 'PASSWORD_RECOVERY') {
-          // Clear all user data on these events
+        } else if (event === 'PASSWORD_RECOVERY') {
+          // Clear all user data on password recovery events
+          setSession(null);
+          setUser(null);
+          setUserDocuments(null);
+          setIsEmailVerified(false);
+          setLoading(false);
+        } else {
+          // For any other event without a session, ensure we clear user data
+          // This helps with handling cases like account deletion even if not directly exposed as an event
           setSession(null);
           setUser(null);
           setUserDocuments(null);
