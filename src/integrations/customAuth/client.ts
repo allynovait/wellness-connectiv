@@ -217,11 +217,14 @@ export const resetUserPassword = async (
   newPassword: string
 ): Promise<boolean> => {
   try {
-    // Получаем данные пользователя по email напрямую через SQL функцию
+    // Используем приведение типа для обхода ограничений TypeScript
     const { data: userData, error: userError } = await supabase
-      .rpc('get_user_by_email', { user_email: email });
+      .rpc('get_user_by_email', { user_email: email }) as { 
+        data: { id: string }[] | null; 
+        error: any 
+      };
     
-    if (userError || !userData || !userData.length) {
+    if (userError || !userData || userData.length === 0) {
       console.error("Ошибка поиска пользователя:", userError);
       return false;
     }
@@ -229,19 +232,26 @@ export const resetUserPassword = async (
     // Получаем ID пользователя из результата
     const userId = userData[0].id;
     
-    // Обновляем пароль напрямую через SQL функцию
-    const { data, error: updateError } = await supabase
+    console.log("Found user ID:", userId);
+    
+    // Обновляем пароль напрямую через SQL функцию с приведением типа
+    const { data: updateResult, error: updateError } = await supabase
       .rpc('update_user_password', { 
         user_id: userId, 
         new_password: newPassword 
-      });
+      }) as {
+        data: boolean | null;
+        error: any
+      };
     
     if (updateError) {
       console.error("Ошибка обновления пароля:", updateError);
       return false;
     }
     
-    return true;
+    console.log("Password update result:", updateResult);
+    
+    return updateResult === true;
   } catch (error) {
     console.error("Ошибка при сбросе пароля:", error);
     return false;

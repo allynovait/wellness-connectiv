@@ -19,7 +19,10 @@ export const AdminPasswordReset = () => {
     setLoading(true);
     
     try {
+      console.log("Resetting password for:", email);
       const result = await resetPassword(email, password);
+      console.log("Password reset result:", result);
+      
       if (result) {
         toast.success("Пароль успешно изменен");
         // Reset password field after successful reset
