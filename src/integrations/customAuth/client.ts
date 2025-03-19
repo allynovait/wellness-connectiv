@@ -1,4 +1,3 @@
-
 import { supabase } from "../supabase/client";
 import { ProfileWithSession, Session } from "./types";
 import { UserProfile, UserRole } from "@/types/auth";
