@@ -21,7 +21,5 @@ export async function resetPasswordForUser(email: string, newPassword: string): 
   }
 }
 
-// Execute password reset for specific user
-resetPasswordForUser("burchik0912@gmail.com", "rEVEBU9988").then(() => {
-  console.log("Password reset operation completed");
-});
+// Removing auto-execution to prevent errors
+// The function will be called from the admin panel

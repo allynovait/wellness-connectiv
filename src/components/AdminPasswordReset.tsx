@@ -5,11 +5,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import { toast } from "sonner";
 
 export const AdminPasswordReset = () => {
   const { resetPassword } = useAuth();
-  const [email, setEmail] = useState("burchik0912@gmail.com");
-  const [password, setPassword] = useState("rEVEBU9988");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [showPanel, setShowPanel] = useState(false);
 
@@ -20,9 +21,15 @@ export const AdminPasswordReset = () => {
     try {
       const result = await resetPassword(email, password);
       if (result) {
-        // Reset form after successful reset
+        toast.success("Пароль успешно изменен");
+        // Reset password field after successful reset
         setPassword("");
+      } else {
+        toast.error("Не удалось изменить пароль");
       }
+    } catch (error) {
+      console.error("Error resetting password:", error);
+      toast.error("Ошибка при сбросе пароля");
     } finally {
       setLoading(false);
     }
