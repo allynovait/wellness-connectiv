@@ -68,7 +68,7 @@ export const signIn = async (email: string, password: string): Promise<ProfileWi
     
     console.log("Authentication successful for user ID:", userId);
     
-    // Создаем новую сессию
+    // Создаем новую сессию в public.sessions
     const { data: sessionToken, error: sessionError } = await supabase
       .rpc('create_session', { user_id: userId });
     
@@ -92,7 +92,7 @@ export const signIn = async (email: string, password: string): Promise<ProfileWi
       return null;
     }
     
-    // Получаем документы пользователя
+    // Получаем документы пользователя, если они существуют
     const { data: docsData } = await supabase
       .from('documents')
       .select('*')
@@ -146,7 +146,7 @@ function validateRole(role: string): UserRole {
   return 'patient';
 }
 
-// Регистрация пользователя - полностью переделана, используя прямой SQL запрос вместо RPC
+// Регистрация пользователя - обновлена, не создаёт записи в таблице documents
 export const signUp = async (
   email: string, 
   password: string, 
@@ -183,7 +183,7 @@ export const signUp = async (
     
     console.log("Password hashed successfully");
     
-    // Создаем нового пользователя с хешированным паролем через прямой SQL запрос
+    // Создаем нового пользователя с хешированным паролем
     const userId = crypto.randomUUID();
     
     // Вставляем напрямую в profiles
@@ -206,20 +206,6 @@ export const signUp = async (
     }
     
     console.log("User profile created with ID:", userId);
-    
-    // Создаем запись в таблице documents для пользователя
-    const { error: docsError } = await supabase
-      .from('documents')
-      .insert({
-        user_id: userId
-      });
-      
-    if (docsError) {
-      console.error("Error creating documents record:", docsError);
-      // Не возвращаем ошибку, так как профиль уже создан успешно
-    } else {
-      console.log("Documents record created successfully");
-    }
     
     return true;
   } catch (error) {
