@@ -540,9 +540,24 @@ export type Database = {
         }
         Returns: boolean
       }
+      get_user_by_email: {
+        Args: {
+          user_email: string
+        }
+        Returns: {
+          id: string
+        }[]
+      }
       get_user_role: {
         Args: Record<PropertyKey, never>
         Returns: string
+      }
+      update_user_password: {
+        Args: {
+          user_id: string
+          new_password: string
+        }
+        Returns: boolean
       }
       validate_session: {
         Args: {

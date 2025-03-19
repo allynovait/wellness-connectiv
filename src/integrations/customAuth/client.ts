@@ -217,19 +217,22 @@ export const resetUserPassword = async (
   newPassword: string
 ): Promise<boolean> => {
   try {
-    // Получаем данные пользователя по email напрямую через SQL запрос
+    // Получаем данные пользователя по email напрямую через SQL функцию
     const { data: userData, error: userError } = await supabase
       .rpc('get_user_by_email', { user_email: email });
     
-    if (userError || !userData) {
+    if (userError || !userData || !userData.length) {
       console.error("Ошибка поиска пользователя:", userError);
       return false;
     }
     
-    // Обновляем пароль напрямую через SQL запрос
-    const { error: updateError } = await supabase
+    // Получаем ID пользователя из результата
+    const userId = userData[0].id;
+    
+    // Обновляем пароль напрямую через SQL функцию
+    const { data, error: updateError } = await supabase
       .rpc('update_user_password', { 
-        user_id: userData.id, 
+        user_id: userId, 
         new_password: newPassword 
       });
     
