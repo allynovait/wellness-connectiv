@@ -1,7 +1,7 @@
 
 import { supabase } from "../supabase/client";
 import { ProfileWithSession } from "./types";
-import { createSession } from "./sessionManager";
+import { createSession, terminateSession } from "./sessionManager";
 import { validateRole } from "./utils";
 import { UserProfile, UserRole } from "@/types/auth";
 
@@ -169,5 +169,5 @@ export const signOut = async (): Promise<boolean> => {
   }
 };
 
-// Import from sessionManager but re-export here for seamless transition
+// Re-export for API compatibility
 export { terminateSession } from "./sessionManager";
