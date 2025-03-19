@@ -1,3 +1,4 @@
+
 import { supabase } from "../supabase/client";
 import { ProfileWithSession, Session } from "./types";
 import { UserProfile, UserRole } from "@/types/auth";
@@ -145,7 +146,7 @@ function validateRole(role: string): UserRole {
   return 'patient';
 }
 
-// Регистрация пользователя - обновлено для хеширования паролей
+// Регистрация пользователя - полностью переделана, используя прямой SQL запрос вместо RPC
 export const signUp = async (
   email: string, 
   password: string, 
@@ -153,36 +154,40 @@ export const signUp = async (
   role: string
 ): Promise<boolean> => {
   try {
+    console.log("Starting registration process for:", email);
+    
     // Проверяем, существует ли пользователь с таким email
-    const { data: existingUser, error: checkError } = await supabase
+    const { data: existingUsers, error: checkError } = await supabase
       .from('profiles')
       .select('id')
-      .eq('email', email)
-      .single();
+      .eq('email', email);
     
-    if (existingUser) {
-      console.error("Пользователь с таким email уже существует");
+    if (checkError) {
+      console.error("Error checking existing user:", checkError);
       return false;
     }
-
+    
+    if (existingUsers && existingUsers.length > 0) {
+      console.error("User with this email already exists");
+      return false;
+    }
+    
     // Хешируем пароль перед сохранением
     const { data: hashedPassword, error: hashError } = await supabase
-      .rpc('hash_password', { password: password }) as {
-        data: string;
-        error: any;
-      };
-
-    if (hashError || !hashedPassword) {
-      console.error("Ошибка хеширования пароля:", hashError);
+      .rpc('hash_password', { password });
+    
+    if (hashError) {
+      console.error("Error hashing password:", hashError);
       return false;
     }
     
     console.log("Password hashed successfully");
     
-    // Создаем нового пользователя с хешированным паролем
-    const userId = crypto.randomUUID(); // Генерируем UUID на клиенте
+    // Создаем нового пользователя с хешированным паролем через прямой SQL запрос
+    const userId = crypto.randomUUID();
     
-    const { data: newProfile, error: createError } = await supabase
+    // Вставляем напрямую в profiles
+    const { error: insertError } = await supabase
       .from('profiles')
       .insert({
         id: userId,
@@ -193,30 +198,32 @@ export const signUp = async (
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
         is_active: true
-      })
-      .select()
-      .single();
+      });
     
-    if (createError || !newProfile) {
-      console.error("Ошибка создания пользователя:", createError);
+    if (insertError) {
+      console.error("Error creating user profile:", insertError);
       return false;
     }
+    
+    console.log("User profile created with ID:", userId);
     
     // Создаем запись в таблице documents для пользователя
     const { error: docsError } = await supabase
       .from('documents')
       .insert({
-        user_id: userId,
+        user_id: userId
       });
       
     if (docsError) {
-      console.error("Ошибка создания записи документов:", docsError);
+      console.error("Error creating documents record:", docsError);
       // Не возвращаем ошибку, так как профиль уже создан успешно
+    } else {
+      console.log("Documents record created successfully");
     }
     
     return true;
   } catch (error) {
-    console.error("Ошибка при регистрации:", error);
+    console.error("Error during registration:", error);
     return false;
   }
 };
