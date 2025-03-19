@@ -1,3 +1,4 @@
+
 import { supabase } from "../supabase/client";
 import { ProfileWithSession, Session } from "./types";
 import { UserProfile, UserRole } from "@/types/auth";
@@ -54,6 +55,8 @@ export const getSession = async (): Promise<Session | null> => {
 // Вход пользователя
 export const signIn = async (email: string, password: string): Promise<ProfileWithSession | null> => {
   try {
+    console.log("Attempting authentication for:", email);
+    
     // Аутентификация пользователя через нашу RPC-функцию
     const { data: userId, error: authError } = await supabase
       .rpc('authenticate_user', { user_email: email, user_password: password });
@@ -62,6 +65,8 @@ export const signIn = async (email: string, password: string): Promise<ProfileWi
       console.error("Ошибка аутентификации:", authError);
       return null;
     }
+    
+    console.log("Authentication successful for user ID:", userId);
     
     // Создаем новую сессию
     const { data: sessionToken, error: sessionError } = await supabase
@@ -141,7 +146,7 @@ function validateRole(role: string): UserRole {
   return 'patient';
 }
 
-// Регистрация пользователя
+// Регистрация пользователя - обновлено для хеширования паролей
 export const signUp = async (
   email: string, 
   password: string, 
@@ -160,16 +165,32 @@ export const signUp = async (
       console.error("Пользователь с таким email уже существует");
       return false;
     }
+
+    // Хешируем пароль перед сохранением
+    const { data: hashedPassword, error: hashError } = await supabase
+      .rpc('hash_password', { password: password }) as {
+        data: string;
+        error: any;
+      };
+
+    if (hashError || !hashedPassword) {
+      console.error("Ошибка хеширования пароля:", hashError);
+      return false;
+    }
     
-    // Создаем нового пользователя
+    console.log("Password hashed successfully");
+    
+    // Создаем нового пользователя с хешированным паролем
+    const userId = crypto.randomUUID(); // Генерируем UUID на клиенте
+    
     const { data: newProfile, error: createError } = await supabase
       .from('profiles')
       .insert({
-        id: crypto.randomUUID(), // Генерируем UUID на клиенте
+        id: userId,
         email,
-        password,
+        password: hashedPassword,
         full_name,
-        role: validateRole(role), // Проверяем роль при сохранении
+        role: validateRole(role),
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
         is_active: true
@@ -180,6 +201,18 @@ export const signUp = async (
     if (createError || !newProfile) {
       console.error("Ошибка создания пользователя:", createError);
       return false;
+    }
+    
+    // Создаем запись в таблице documents для пользователя
+    const { error: docsError } = await supabase
+      .from('documents')
+      .insert({
+        user_id: userId,
+      });
+      
+    if (docsError) {
+      console.error("Ошибка создания записи документов:", docsError);
+      // Не возвращаем ошибку, так как профиль уже создан успешно
     }
     
     return true;
@@ -211,13 +244,15 @@ export const signOut = async (): Promise<boolean> => {
   }
 };
 
-// Смена пароля пользователя
+// Смена пароля пользователя - обновлено с учетом хеширования
 export const resetUserPassword = async (
   email: string,
   newPassword: string
 ): Promise<boolean> => {
   try {
-    // Используем приведение типа для обхода ограничений TypeScript
+    console.log("Attempting to reset password for:", email);
+    
+    // Получаем ID пользователя по email
     const { data: userData, error: userError } = await supabase
       .rpc('get_user_by_email', { user_email: email }) as { 
         data: { id: string }[] | null; 
@@ -234,7 +269,7 @@ export const resetUserPassword = async (
     
     console.log("Found user ID:", userId);
     
-    // Обновляем пароль напрямую через SQL функцию с приведением типа
+    // Обновляем пароль через RPC-функцию, которая выполнит хеширование на стороне сервера
     const { data: updateResult, error: updateError } = await supabase
       .rpc('update_user_password', { 
         user_id: userId, 

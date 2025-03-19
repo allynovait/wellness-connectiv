@@ -552,6 +552,12 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: string
       }
+      hash_password: {
+        Args: {
+          password: string
+        }
+        Returns: string
+      }
       update_user_password: {
         Args: {
           user_id: string
