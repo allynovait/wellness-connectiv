@@ -30,17 +30,11 @@ export const updateProfile = async (
     
     console.log("Updating profile for user ID:", userId, "with data:", profile);
 
-    const updates = {
-      ...profile,
-      id: userId,
-      updated_at: new Date().toISOString(),
-    };
-
     // Сначала проверяем, существует ли профиль пользователя
     const { data: existingProfile, error: checkError } = await supabase
       .from("profiles")
       .select("id, full_name, role")
-      .eq("id", userId)
+      .eq("id", userId as any)
       .maybeSingle();
       
     console.log("Profile check result:", existingProfile, checkError);
@@ -51,27 +45,38 @@ export const updateProfile = async (
       console.log("Profile not found, creating new one");
       // Профиль не существует, создаем новый
       const createData = {
-        ...updates,
         id: userId,
         created_at: new Date().toISOString(),
-        // Ensure full_name is always provided as it's required
         full_name: profile.full_name || session.user.email?.split('@')[0] || 'Новый пользователь',
         role: profile.role || 'patient', // Устанавливаем роль по умолчанию
+        updated_at: new Date().toISOString(),
+        birth_date: profile.birth_date,
+        gender: profile.gender,
+        photo: profile.photo,
+        card_number: profile.card_number,
+        attachment_date: profile.attachment_date,
+        clinic: profile.clinic
       };
       
       result = await supabase
         .from("profiles")
-        .insert(createData)
+        .insert(createData as any)
         .select();
         
       console.log("Profile creation result:", result);
     } else {
       console.log("Profile found, updating existing one");
       // Профиль существует, обновляем
+      const updates = {
+        ...profile,
+        id: userId,
+        updated_at: new Date().toISOString(),
+      };
+
       result = await supabase
         .from("profiles")
-        .update(updates)
-        .eq("id", userId)
+        .update(updates as any)
+        .eq("id", userId as any)
         .select();
         
       console.log("Profile update result:", result);
@@ -136,24 +141,24 @@ export const updateDocuments = async (
       console.log("Sending update to Supabase with data:", updates);
       response = await supabase
         .from("documents")
-        .update(updates)
-        .eq("id", userDocuments.id)
+        .update(updates as any)
+        .eq("id", userDocuments.id as any)
         .select();
         
       console.log("Documents update complete. Response:", response);
     } else {
       console.log("Creating new documents record for user ID:", userId);
       const newDocument = {
-        ...documents,
         user_id: userId,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
+        ...documents
       };
 
       console.log("Sending insert to Supabase with data:", newDocument);
       response = await supabase
         .from("documents")
-        .insert(newDocument)
+        .insert(newDocument as any)
         .select();
         
       console.log("Documents insert complete. Response:", response);

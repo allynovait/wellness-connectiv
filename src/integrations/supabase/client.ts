@@ -25,15 +25,7 @@ export const supabase = createClient<Database>(
       autoRefreshToken: false, // Отключаем автоматическое обновление токена
       persistSession: true,
       detectSessionInUrl: false, // Отключаем автоматическое обнаружение сессии в URL
-      flowType: 'pkce',
-      // Добавляем fetch-опции для исправления сетевых ошибок
-      fetch: (url, options) => {
-        const fetchOptions = {
-          ...options,
-          credentials: 'same-origin' as RequestCredentials,
-        };
-        return fetch(url, fetchOptions);
-      }
+      flowType: 'pkce'
     }
   }
 );

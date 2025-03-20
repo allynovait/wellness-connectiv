@@ -24,7 +24,7 @@ export const signIn = async (email: string, password: string): Promise<ProfileWi
     console.log("Authentication successful for user ID:", userId);
     
     // Create new session in public.sessions
-    const sessionToken = await createSession(userId);
+    const sessionToken = await createSession(userId as string);
     
     if (!sessionToken) {
       return null;
@@ -34,7 +34,7 @@ export const signIn = async (email: string, password: string): Promise<ProfileWi
     const { data: profileData, error: profileError } = await supabase
       .from('profiles')
       .select('*')
-      .eq('id', userId)
+      .eq('id', userId as any)
       .single();
     
     if (profileError || !profileData) {
@@ -46,7 +46,7 @@ export const signIn = async (email: string, password: string): Promise<ProfileWi
     const { data: docsData } = await supabase
       .from('documents')
       .select('*')
-      .eq('user_id', userId)
+      .eq('user_id', userId as any)
       .single();
 
     // Create user profile with correct role type
@@ -71,7 +71,7 @@ export const signIn = async (email: string, password: string): Promise<ProfileWi
       session: {
         token: sessionToken,
         user: {
-          id: userId,
+          id: userId as string,
           email: profileData.email,
           email_confirmed_at: profileData.email_confirmed_at
         },
@@ -103,7 +103,7 @@ export const signUp = async (
     const { data: existingUsers, error: checkError } = await supabase
       .from('profiles')
       .select('id')
-      .eq('email', email);
+      .eq('email', email as any);
     
     if (checkError) {
       console.error("Error checking existing user:", checkError);
@@ -129,19 +129,21 @@ export const signUp = async (
     // Create new user with hashed password
     const userId = crypto.randomUUID();
     
-    // Insert directly into profiles
+    // Insert directly into profiles with type assertion
+    const profileData = {
+      id: userId, 
+      email,
+      password: hashedPassword,
+      full_name,
+      role: validateRole(role),
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      is_active: true
+    };
+    
     const { error: insertError } = await supabase
       .from('profiles')
-      .insert({
-        id: userId,
-        email,
-        password: hashedPassword,
-        full_name,
-        role: validateRole(role),
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-        is_active: true
-      });
+      .insert(profileData as any);
     
     if (insertError) {
       console.error("Error creating user profile:", insertError);

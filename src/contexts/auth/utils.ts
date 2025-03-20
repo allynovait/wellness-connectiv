@@ -11,7 +11,7 @@ export async function fetchUserData(userId: string) {
     const { data: userData, error: userError } = await supabase
       .from("profiles")
       .select("*")
-      .eq("id", userId)
+      .eq("id", userId as any)
       .single();
 
     if (userError) {
@@ -59,7 +59,7 @@ export async function fetchUserData(userId: string) {
     const { data: documentsData, error: documentsError } = await supabase
       .from("documents")
       .select("*")
-      .eq("user_id", userId)
+      .eq("user_id", userId as any)
       .single();
 
     if (documentsError && documentsError.code !== "PGRST116") {

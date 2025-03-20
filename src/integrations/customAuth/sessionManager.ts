@@ -26,7 +26,7 @@ export const getSession = async (): Promise<Session | null> => {
       const { data: userData, error: userError } = await supabase
         .from('profiles')
         .select('*')
-        .eq('id', data)
+        .eq('id', data as any)
         .single();
 
       if (userError || !userData) {
@@ -73,8 +73,9 @@ export const createSession = async (userId: string): Promise<string | null> => {
     }
     
     // Save token in localStorage
-    localStorage.setItem('session_token', sessionToken);
-    return sessionToken;
+    const token = sessionToken as string;
+    localStorage.setItem('session_token', token);
+    return token;
   } catch (error) {
     console.error("Error creating session:", error);
     return null;
@@ -93,7 +94,7 @@ export const terminateSession = async (): Promise<boolean> => {
         await supabase
           .from('sessions')
           .delete()
-          .eq('token', sessionToken);
+          .eq('token', sessionToken as any);
       } catch (error) {
         console.error("Network error during session termination:", error);
         // Продолжаем процесс выхода, даже если есть ошибка сети
