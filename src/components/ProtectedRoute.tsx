@@ -1,5 +1,5 @@
 
-import { Navigate, useLocation } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/auth";
 import { useEffect, useState } from "react";
 
@@ -34,27 +34,10 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
     );
   }
   
-  // If loading takes too long, we'll proceed with redirection if needed
+  // Log auth state for debugging
   console.log("Auth state:", { loading, session, isEmailVerified, initialLoadComplete });
   
-  // If we're returning from email verification, don't redirect immediately
-  // Give the auth state time to update
-  if (isVerifiedRedirect) {
-    return <>{children}</>;
-  }
-  
-  // If there's no session, redirect to auth page
-  if (!session) {
-    console.log("No session, redirecting to /auth");
-    return <Navigate to="/auth" replace />;
-  }
-  
-  // If email is not verified, redirect to verification page
-  if (!isEmailVerified) {
-    console.log("Email not verified, redirecting to verification page");
-    return <Navigate to="/auth?verification=pending" replace />;
-  }
-
-  // If all checks pass, show protected content
+  // We're removing the redirect logic as requested
+  // Allow children to render regardless of authentication state
   return <>{children}</>;
 };

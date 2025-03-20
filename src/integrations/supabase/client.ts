@@ -22,10 +22,18 @@ export const supabase = createClient<Database>(
   SUPABASE_PUBLISHABLE_KEY,
   {
     auth: {
-      autoRefreshToken: true,
+      autoRefreshToken: false, // Отключаем автоматическое обновление токена
       persistSession: true,
-      detectSessionInUrl: true,
+      detectSessionInUrl: false, // Отключаем автоматическое обнаружение сессии в URL
       flowType: 'pkce',
+      // Добавляем fetch-опции для исправления сетевых ошибок
+      fetch: (url, options) => {
+        const fetchOptions = {
+          ...options,
+          credentials: 'same-origin' as RequestCredentials,
+        };
+        return fetch(url, fetchOptions);
+      }
     }
   }
 );

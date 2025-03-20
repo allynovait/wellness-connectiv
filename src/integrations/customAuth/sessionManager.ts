@@ -11,44 +11,50 @@ export const getSession = async (): Promise<Session | null> => {
     const sessionToken = localStorage.getItem('session_token');
     if (!sessionToken) return null;
 
-    // Validate session through our database
-    const { data, error } = await supabase
-      .rpc('validate_session', { session_token: sessionToken });
+    try {
+      // Validate session through our database
+      const { data, error } = await supabase
+        .rpc('validate_session', { session_token: sessionToken });
 
-    if (error || !data) {
-      console.error("Session validation error:", error);
-      localStorage.removeItem('session_token');
+      if (error || !data) {
+        console.log("Session validation error:", error);
+        localStorage.removeItem('session_token');
+        return null;
+      }
+
+      // If session is valid, get user data
+      const { data: userData, error: userError } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', data)
+        .single();
+
+      if (userError || !userData) {
+        console.log("Error fetching user data:", userError);
+        localStorage.removeItem('session_token');
+        return null;
+      }
+
+      return {
+        token: sessionToken,
+        user: {
+          id: userData.id,
+          email: userData.email,
+          email_confirmed_at: userData.email_confirmed_at
+        },
+        access_token: sessionToken,
+        refresh_token: sessionToken,
+        expires_in: 3600,
+        token_type: 'bearer'
+      };
+    } catch (fetchError) {
+      console.log("Network error during session validation:", fetchError);
+      // В случае сетевой ошибки, не удаляем токен сессии, 
+      // а возвращаем null, чтобы повторить попытку позже
       return null;
     }
-
-    // If session is valid, get user data
-    const { data: userData, error: userError } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', data)
-      .single();
-
-    if (userError || !userData) {
-      console.error("Error fetching user data:", userError);
-      localStorage.removeItem('session_token');
-      return null;
-    }
-
-    return {
-      token: sessionToken,
-      user: {
-        id: userData.id,
-        email: userData.email,
-        email_confirmed_at: userData.email_confirmed_at
-      },
-      access_token: sessionToken,
-      refresh_token: sessionToken,
-      expires_in: 3600,
-      token_type: 'bearer'
-    };
   } catch (error) {
     console.error("Error retrieving session:", error);
-    localStorage.removeItem('session_token');
     return null;
   }
 };
@@ -82,11 +88,16 @@ export const terminateSession = async (): Promise<boolean> => {
   try {
     const sessionToken = localStorage.getItem('session_token');
     if (sessionToken) {
-      // Remove session from database
-      await supabase
-        .from('sessions')
-        .delete()
-        .eq('token', sessionToken);
+      try {
+        // Remove session from database
+        await supabase
+          .from('sessions')
+          .delete()
+          .eq('token', sessionToken);
+      } catch (error) {
+        console.error("Network error during session termination:", error);
+        // Продолжаем процесс выхода, даже если есть ошибка сети
+      }
     }
     
     // Clear localStorage
@@ -95,6 +106,8 @@ export const terminateSession = async (): Promise<boolean> => {
     return true;
   } catch (error) {
     console.error("Error during logout:", error);
-    return false;
+    // Всё равно пытаемся очистить localStorage
+    localStorage.removeItem('session_token');
+    return true; // Возвращаем true, чтобы UI обновился
   }
 };

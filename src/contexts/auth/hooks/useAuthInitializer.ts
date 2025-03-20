@@ -14,11 +14,15 @@ export function useAuthInitializer(setters: {
   const { setSession, setUser, setUserDocuments, setIsEmailVerified, setLoading } = setters;
 
   useEffect(() => {
+    let isMounted = true; // Для предотвращения обновления состояния после размонтирования
+
     const initSession = async () => {
       console.log("Initializing session");
       setLoading(true);
       try {
         const session = await getSession();
+        
+        if (!isMounted) return;
         
         console.log("Initial session:", session?.user?.email);
         setSession(session);
@@ -29,35 +33,40 @@ export function useAuthInitializer(setters: {
           try {
             const userData = await fetchUserData(session.user.id);
             
+            if (!isMounted) return;
+            
             if (!userData) {
-              throw new Error("Failed to fetch initial user data");
+              console.log("Failed to fetch initial user data");
+              return;
             }
             
             console.log("Initial user data:", userData);
             setUser(userData.user);
             setUserDocuments(userData.userDocuments);
           } catch (error) {
-            console.error("Error fetching initial user data:", error);
+            if (!isMounted) return;
             
-            setSession(null);
-            setUser(null);
-            setUserDocuments(null);
-            setIsEmailVerified(false);
-            toast.error("Ошибка загрузки данных пользователя");
+            console.error("Error fetching initial user data:", error);
+            // Не сбрасываем сессию при ошибке загрузки данных
+            // чтобы не создавать цикл повторных попыток
           }
         }
       } catch (error) {
+        if (!isMounted) return;
+        
         console.error("Error getting initial session:", error);
-        setSession(null);
-        setUser(null);
-        setUserDocuments(null);
-        setIsEmailVerified(false);
-        toast.error("Ошибка инициализации сессии");
+        // Не показываем ошибку пользователю при проблемах с инициализацией
       } finally {
-        setLoading(false);
+        if (isMounted) {
+          setLoading(false);
+        }
       }
     };
 
     initSession();
+
+    return () => {
+      isMounted = false;
+    };
   }, [setSession, setUser, setUserDocuments, setIsEmailVerified, setLoading]);
 }
